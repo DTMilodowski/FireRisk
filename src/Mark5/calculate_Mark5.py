@@ -22,12 +22,19 @@
 # - precipitation, P
 # - number of days since previous rainfall event, d
 # - Keetch-Byram drought index [Keetch & Byram, 1968], I
+#
+# By including the K-B drought index, the Mark5 approach does attempt to
+# capture some of the dynamics of soil and litter moisture on fire risk.
 #==============================================================================
 import numpy as np
 
-def calculate_Keetch_Byram_drought_index():
+# Calculation of K-B drought index, requires (1) max temperature, (2) total
+# rainfall for past 24 hours. This was originally a book-keeping approach based
+# on a lookup table, with the index updated at each iteration by removing net
+# precipitation and incrementing the index to account for drying.
+def calculate_Keetch_Byram_drought_index(maxT, P24):
     
-
+# Calculation of the Mark5 index based on weather and K-B drought index
 def calculate_Mark5(H,T,U,P,d,I):
 
     # First calculate drought factor
