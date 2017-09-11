@@ -48,12 +48,29 @@ def calculate_Keetch_Byram_drought_index(Q0, maxT, P24, MAP, dt_days = 1, interc
 
     return Q
 
-# Calculation of the Mark5 index based on weather and K-B drought index
-def calculate_Mark5(H,T,U,P,d,I):
+# Calculation of the Mark5 index based on weather and K-B drought index,
+# requires:
+# (1) Relative humidity in %
+# (2) max air temperature in oC
+# (3) average wind velocity in open at 10 m height, U
+# (4) total rainfall for past 24 hours in mm, P
+# (5) days since previous rain event
+# (6) Moisture deficiency (KB drought index) at start of day, in mm equivalents
+# (7) MAP in mm. 
+# (8) optional - timestep in days (default is 1 day)
+# (9) optional - amount of precipitation intercepted in mm (default is 5 mm)
+def calculate_Mark5(H,T,U,P,d,Q0,MAP,dt_days=1,interception_mm=5):
 
-    # First calculate drought factor
+    # Start with determining whether it has rained
+    if P>0:
+        d = 0
+
+    # SecondFirst calculate KB drought index
+    KB = calculate_Keetch_Byram_drought_index(Q0, T, P, MAP, dt_days, interception_mm)
+    # Next calculate drought factor
     DF = (0.191*(KB+104)*(d+1)**1.5)/(3.52*(d+1)**1.5 + P-1)
 
     # Now use this to calculate fire risk
     F = 2.0*exp(-0.450 + 0.987*np.log(DF) - 0.0345*H + 0.0338*T + 0.0234*U)
 
+    return F, d
