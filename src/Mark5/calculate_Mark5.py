@@ -11,7 +11,9 @@
 #
 # Note that the Mark5 index does not account for factors such as diversity in 
 # the abundance or characteristics of fuel loads, or topographic slope, and is
-# based on an empirical formulation of fire risk from Australia
+# based on an empirical formulation of fire risk from Australia. It should
+# therefore be considered as a tool to understand the weather/climate influence
+# on fire risk, rather than as a comprehensive metric of fire risk.
 #
 # Meteorological variables required:
 # - relative humidity, H
@@ -23,6 +25,7 @@
 #==============================================================================
 import numpy as np
 
+def calculate_Keetch_Byram_drought_index():
 
 def calculate_Mark5(H,T,U,P,d,I):
 
