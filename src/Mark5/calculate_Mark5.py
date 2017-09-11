@@ -28,13 +28,25 @@
 #==============================================================================
 import numpy as np
 
-# Calculation of K-B drought index, requires (1) max temperature, (2) total
-# rainfall for past 24 hours. This was originally a book-keeping approach based
-# on a lookup table, with the index updated at each iteration by removing net
-# precipitation and incrementing the index to account for drying.
-def calculate_Keetch_Byram_drought_index(maxT, P24):
+# Calculation of K-B drought index for a given day, requires:
+# (1) Moisture deficiency at start of the day, Q0 in mm
+# (2) max temperature in oC
+# (3) total rainfall for past 24 hours in mm
+# (4) MAP in mm. 
+# This was originally a book-keeping approach based on a lookup table, with the # index updated at each iteration by removing net precipitation and incrementing
+# the index to account for drying.
+def calculate_Keetch_Byram_drought_index(Q0, maxT, P24, MAP, dt_days = 1, interception_mm = 5):
 
-    return KB
+    # (1) account for moisture addition due to precipitation
+    dQ_pptn = -np.max(0,P24-interception_mm)
+    
+    # (2) account for drying due to evapotranspiration
+    dQ_drying = (10**-3)*(203.2-Q0)*(0.968*np.exp(0.0875*maxT + 1.5552) -8.30)*dt_days/(1+ 10.88*np.exp(-0.001736*MAP))
+    
+    # (3) update moisture deficiency
+    Q = Q0 + dQ_pttn + dQ_drying
+
+    return Q
 
 # Calculation of the Mark5 index based on weather and K-B drought index
 def calculate_Mark5(H,T,U,P,d,I):
