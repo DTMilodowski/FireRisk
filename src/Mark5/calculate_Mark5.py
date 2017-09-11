@@ -45,6 +45,8 @@ def calculate_Keetch_Byram_drought_index(Q0, maxT, P24, MAP, dt_days = 1, interc
     
     # (3) update moisture deficiency
     Q = Q0 + dQ_pttn + dQ_drying
+    if Q < 0:
+        Q=0
 
     return Q
 
