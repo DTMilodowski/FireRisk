@@ -21,11 +21,12 @@
 # - wind velocity, U
 # - precipitation, P
 # - number of days since previous rainfall event, d
-# - Keetch-Byram drought index [Keetch & Byram, 1960], I
+# - Keetch-Byram drought index [Keetch & Byram, 1968], I
 #==============================================================================
 import numpy as np
 
 def calculate_Keetch_Byram_drought_index():
+    
 
 def calculate_Mark5(H,T,U,P,d,I):
 
