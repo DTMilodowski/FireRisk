@@ -38,17 +38,27 @@ import numpy as np
 # Inputs are:
 # (1) relative humidity in %
 # (2) air temperature in oC
-# (3) Precipitation in mm
-# (4) Previous days FFMC value (default is -9999, for which we need to estimate
+# (3) wind speed in m/s
+# (4) Precipitation in mm
+# (5) Previous days FFMC value (default is -9999, for which we need to estimate
 #     starting FFMC)
-def calculate_FFMC(H,T,P,FFMC0=-9999):
+def calculate_FFMC(H,T,W,P,FFMC0=-9999):
 
-    # (1) Calculate rate constants for wetting and drying
     if FFMC0==-9999:
         FFMC0 = 60. # currently supply a default value, but need to develop scheme
                     # based on local climate
     m0 = 147.2*(101-FFMC0)/(59.5+FFMC0)
     
+    # (1) Calculate rate constants for wetting and drying
+    #     Wetting and drying rates assumed to be exponential, with rate constants
+    #     a function of temperature, windspeed and relative humidity
+    #     - drying
+    k0_d = 0.424*(1-(H/100)**1.7) + 0.0694*W**0.5*(1-(H/100)**8) # equation 4
+    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+    #     - wetting
+    k0_w = 0.424*(1-((100-H)/100)**1.7) + 0.0694*W**0.5*(1-((100-H)/100)**8) # equation 5
+    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+
     # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
     #     in % moisture content based on dry weight.
     #     - equilibrium content for drying (Equation 8a)
