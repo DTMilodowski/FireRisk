@@ -29,4 +29,39 @@
 #     Drought Code ________/            BUI
 #          DC
 #==============================================================================
+import numpy as np
 
+# Function to calculate the Fine Fuel Moisture Code.  This describes the
+# moisture status of the fine litter, and is particularly important for in
+# determining the ISI, as ignition likelihood is strongly dependent on the
+# availability of fine litter.
+# Inputs are:
+# (1) relative humidity in %
+# (2) air temperature in oC
+def calculate_FFMC(H,T):
+
+    # (1) Calculate rate constants for wetting and drying
+
+
+    # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
+    #     in % moisture content based on dry weight.
+    #     - equilibrium content for drying (Equation 8a)
+    Ed = 0.942*H**0.679 + 11*np.exp((H-100)/10.) + 0.18*(21.1-T)*(1-np.exp(-0.115*H))
+    #     - equilibrium content for wetting (Equation 8b)
+    Ew = 0.618*H**0.753 + 10*np.exp((H-100)/10.) + 0.18*(21.1-T)*(1-np.exp(-0.115*H))
+    
+    # (3) Need to determine whether to apply wetting or drying phase.
+    #     - If yesterday's moisture content, m0 is greater than Ed, drying regime
+    #       prevails (equation 9)
+    if m0>Ed:
+        m = Ed + (m0 - Ed)*10**-kd
+    #     - If m0 < Ew, wetting regime prevails (equation 10)
+    elif m0<Ew:
+        m = Ew - (Ew - m0)*10**-kw
+    #     - otherwise no change in moisture
+    else:
+        m=m0
+    
+
+
+    return FFMC
