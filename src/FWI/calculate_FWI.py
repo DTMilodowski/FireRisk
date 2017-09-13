@@ -168,4 +168,21 @@ def calculate_DC(T,P, DC0 = -9999, Lf = 0):
     if DC0==-9999:
         DC0 = 200. # currently supply a default value, but need to develop
                    # scheme based on local climate
-    m0 = np.exp(-DC0/400)*800 # equation 22
+    m0 = np.exp(-DC0/400.)*800. # equation 22
+
+    # (1) rainfall phase. Assume that rainfall must be greater than 2.8 mm to
+    #     impact on soil moisture (I appreciate this is arbitrary!)
+    m = m0.copy()
+    precipitation_threshold_mm = 2.8
+    if P>precipitation_threshold_mm:
+        P_=0.83*P-1.27 # equation 23
+        m+=3.937*P_    # equation 24
+
+    # (2) drying phase, i.e. potential evapotranspiration, V.  Use an empirical
+    #     equation (no idea what data this is based on).
+    V = 0.36*(T+2.8) + Lf
+
+    # (3) calculate DC based on equation 22 and 26
+    DC = 400*np.log(800./m) + 0.5*V
+
+    return DC
