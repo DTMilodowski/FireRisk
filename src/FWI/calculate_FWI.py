@@ -225,4 +225,14 @@ def calculate_ISI(FFMC,W):
 # (2) DC
 def calculate_BUI(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
+    return BUI
+
+# Function to calculate the Forest Weather Index (FWI)
+# This is the overarching fire risk index combining the ISI - the risk of fire
+# initiation and spread - with the BUI - the availabile fuel load to sustain a
+# significant fire. It is analagous to Byram's fireline intensity
+# Inputs:
+# (1) ISI
+# (2) BUI
+def calculate_FWI(ISI,BUI):
 
