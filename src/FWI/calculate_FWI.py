@@ -236,3 +236,19 @@ def calculate_BUI(DMC,DC):
 # (2) BUI
 def calculate_FWI(ISI,BUI):
 
+    # (1) calculate the duff moisture function, fBUI, which attempts to 
+    #     translate the available fuel (BUI) into an index of burn intensity
+    #     (equations 38 a and b)
+    fBUI=0
+    if BUI<=80.:
+        fBUI = 0.626*BUI**0.809 +2
+    else:
+        fBUI = 1000./(25. + 108.64*np.exp(-0.023*BUI))
+
+    # (2) Now calculate the FWI
+    B = 0.1 * ISI * fBUI
+    FWI = B.copy()
+    if B>=1:
+        FWI = np.exp(2.72*(0.434*np.log(B))**0.647)
+
+    return FWI
