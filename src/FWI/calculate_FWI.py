@@ -144,3 +144,28 @@ def calculate_DMC(H,T,P,Le,DMC0=-9999):
     DMC += 100*kd # no equation number in manuscript
     
     return DMC
+
+# Function to calculate the Drought Code, DC, which describes the moisture 
+# content of the soil organic carbon, and has the slowest response time of the
+# carbon fuels.  It is important however in determining the extent to which a
+# fire may develop once ignition has occurred, and therefore is integrated into
+# the Build Up Index.
+# -Assumes a maximum theoretical moisture content of 800 (what are the units???)
+# -The original formulation makes an adjustment to account for "overwintering"
+#  i.e. snow melt effects. As snowfall is negligible across most of the tropics
+#  I ignore this.
+# -The original formulation also uses an adjustment factor, Lf, to account for
+#  seasonal changes in day length. I ignore this also, based on the fact that
+#  a value estimated for Canada is unlikely to be valid in the tropics, while
+#  in any case, day length is relatively insensitive to season due to the low
+#  lattitudes
+# Inputs are:
+# (1) air temperature in oC
+# (2) Precipitation in mm
+# (3) Previous days DC value (default is -9999, for which we need to estimate
+#     starting DC)
+def calculate_DC(T,P, DC0 = -9999, Lf = 0):
+    if DC0==-9999:
+        DC0 = 200. # currently supply a default value, but need to develop
+                   # scheme based on local climate
+    m0 = np.exp(-DC0/400)*800 # equation 22
