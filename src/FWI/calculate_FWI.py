@@ -45,13 +45,13 @@ import numpy as np
 def calculate_FFMC(H,T,W,P,FFMC0=-9999):
 
     if FFMC0==-9999:
-        FFMC0 = 60. # currently supply a default value, but need to develop scheme
-                    # based on local climate
+        FFMC0 = 60. # currently supply a default value, but need to develop 
+                    # scheme based on local climate
     m0 = 147.2*(101-FFMC0)/(59.5+FFMC0)
     
     # (1) Calculate rate constants for wetting and drying
-    #     Wetting and drying rates assumed to be exponential, with rate constants
-    #     a function of temperature, windspeed and relative humidity
+    #     Wetting and drying rates assumed to be exponential, with rate 
+    #     constants a function of temperature, windspeed and relative humidity
     #     - drying
     k0_d = 0.424*(1-(H/100)**1.7) + 0.0694*W**0.5*(1-(H/100)**8) # equation 4
     kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
@@ -76,7 +76,7 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
         m = Ew - (Ew - m0)*10**-kw
     #     - otherwise no change in moisture
     else:
-        m=m0
+        m=m0.copy()
     
     # (4) Now deal with moisture input due to rain
     #     This decreases with increasing pptn rate and decreases with increased 
@@ -91,3 +91,56 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
     
     FFMC = 59.5*(250-m)/(147.2+m)
     return FFMC
+
+# Function to calculate the Duff Moisture Code (DMC). This deals with the
+# moisture content of the duff layer - the upper layers of the forest floor,
+# which are beginning to decay. Moisture in this layer is gained through inputs
+# from rainfall, and lost through an exponential drying function towards an
+# assumed equilibrium moisture content of 20%.
+# Inputs are:
+# (1) relative humidity in %
+# (2) air temperature in oC
+# (3) Precipitation in mm
+# (4) Effective day length in hours, Le, assumed to be 3hrs less than actual day
+#     length
+# (5) Previous days DMC value (default is -9999, for which we need to estimate
+#     starting DMC)
+def calculate_DMC(H,T,P,Le,DMC0=-9999):
+
+    if DMC0==-9999:
+        DMC0 = 20. # currently supply a default value, but need to develop
+                   # scheme based on local climate
+    m0 = 20+np.exp((DMC0-244.73)/(-43.43)) # equation 16 rearranged
+
+    # (1) Calculate rate constant for drying of duff layer, kd
+    #     - Assumes exponential drying, equilibrium moisture content 20%
+    #     - Assumes kd proportional to temperature and relative "dryness"
+    #     - Assumes kd proportional to day length -3 hours
+    kd = 1.894*(T+1.1)*(100-H)*Le*10**-6  # no equation number in manuscript
+
+    # (2) Calculate wetting of DMC due to rain. Assumes increase in moisture
+    #     inversely proportional to intensity of rainfall, and that wetting
+    #     effect also decreases as initial moisture content increases
+    precipitation_threshold_mm = 1.5
+    m=m0.copy()
+    DMC = DMC0.copy()
+    if P>precipitation_threshold_mm:
+        P_=0.92*P-1.27 # equation 17
+        b = 0
+        # equations 19 a,b,c
+        if DMC0 <= 33:
+            b = 100/(0.5+0.3*DMC0)
+        elif DMC0 <= 65:
+            b = 14 - 1.3*np.log(DMC0)
+        else:
+            b = 6.2*np.log(DMC0) - 17.2
+
+        m+=1000*P_/(48.77+b*P_) # equation 18
+        
+        # Now recalculate DMC
+        DMC = 244.72 - 43.43*np.log(m-20) # equation 16
+
+    # (3) Now account for drying 
+    DMC += 100*kd # no equation number in manuscript
+    
+    return DMC
