@@ -252,3 +252,21 @@ def calculate_FWI(ISI,BUI):
         FWI = np.exp(2.72*(0.434*np.log(B))**0.647)
 
     return FWI
+
+# equivalent function reading in numpy arrays rather than individual float
+# values 
+def calculate_FWI_array(ISI,BUI):
+
+    # (1) calculate the duff moisture function, fBUI, which attempts to 
+    #     translate the available fuel (BUI) into an index of burn intensity
+    #     (equations 38 a and b)
+    fBUI=np.zeros(ISI.shape)
+    fBUI[BUI<=80] = 0.626*BUI[BUI<=80]**0.809 + 2.
+    fBUI[BUI>80] = 1000./(25. + 108.64*np.exp(-0.023*BUI[BUI>80]))
+
+    # (2) Now calculate the FWI
+    B = 0.1 * ISI * fBUI
+    FWI = B.copy()
+    FWI[B>=1] = np.exp(2.72*(0.434*np.log(B[B>=1]))**0.647)
+
+    return FWI
