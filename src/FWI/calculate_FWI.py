@@ -142,7 +142,50 @@ def calculate_DMC(H,T,P,Le,DMC0=-9999):
 
     # (3) Now account for drying 
     DMC += 100*kd # no equation number in manuscript
+    return DMC
+
+# complimentary function to process arrays in calculation of DMC. Note that now
+# the initial DMC conditions need to be ingested as an argument, therefore need
+# predefining in advance.
+def calculate_DMC_array(H,T,P,Le,DMC0):
+
+    m0 = 20+np.exp((DMC0-244.73)/(-43.43)) # equation 16 rearranged
+
+    # (1) Calculate rate constant for drying of duff layer, kd
+    #     - Assumes exponential drying, equilibrium moisture content 20%
+    #     - Assumes kd proportional to temperature and relative "dryness"
+    #     - Assumes kd proportional to day length -3 hours
+    kd = 1.894*(T+1.1)*(100-H)*Le*10**-6  # no equation number in manuscript
+
+    # (2) Calculate wetting of DMC due to rain. Assumes increase in moisture
+    #     inversely proportional to intensity of rainfall, and that wetting
+    #     effect also decreases as initial moisture content increases
+    precipitation_threshold_mm = 1.5
+    m=m0.copy()
+    DMC = DMC0.copy()
+    b = np.zeros(P.shape)
     
+    # generate a mask to highlight cells that have received sufficient rainfall
+    # to impact on duff layer
+    P_mask = P>precipitation_threshold_mm
+
+    P_=0.92*P-1.27 # equation 17
+
+    # equations 19 a,b,c
+    DMC_mask_a = DMC0[P_mask] <= 33
+    DMC_mask_b = np.all((DMC0[P_mask] <= 33, DMC0[P_mask] <= 65),axis=0)
+    DMC_mask_c = DMC0[P_mask] > 65
+    b[P_mask][DMC_mask_a] = 100/(0.5+0.3*DMC0[P_mask][DMC_mask_a])
+    b[P_mask][DMC_mask_b] = 14 - 1.3*np.log(DMC0[P_mask][DMC_mask_b])
+    b[P_mask][DMC_mask_c] = 6.2*np.log(DMC0[P_mask][DMC_mask_c]) - 17.2
+
+    m[P_mask]+=1000*P_[P_mask]/(48.77+b[P_mask]*P_[P_mask]) # equation 18
+        
+    # Now recalculate DMC
+    DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20) # equation 16
+
+    # (3) Now account for drying 
+    DMC += 100*kd # no equation number in manuscript
     return DMC
 
 # Function to calculate the Drought Code, DC, which describes the moisture 
