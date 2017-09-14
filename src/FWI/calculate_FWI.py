@@ -92,6 +92,62 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
     FFMC = 59.5*(250-m)/(147.2+m)
     return FFMC
 
+# Complimentary function to deal with numpy arrays efficiently. In this case the
+# inital conditions are a required input argument
+def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
+
+    m0 = 147.2*(101-FFMC0)/(59.5+FFMC0)
+    m = m0.copy()
+    
+    # (1) Calculate rate constants for wetting and drying
+    #     Wetting and drying rates assumed to be exponential, with rate 
+    #     constants a function of temperature, windspeed and relative humidity
+    #     - drying
+    k0_d = 0.424*(1-(H/100)**1.7) + 0.0694*W**0.5*(1-(H/100)**8) # equation 4
+    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+    #     - wetting
+    k0_w = 0.424*(1-((100-H)/100)**1.7) + 0.0694*W**0.5*(1-((100-H)/100)**8) # equation 5
+    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+
+    # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
+    #     in % moisture content based on dry weight.
+    #     - equilibrium content for drying (Equation 8a)
+    Ed = 0.942*H**0.679 + 11*np.exp((H-100)/10.) + 0.18*(21.1-T)*(1-np.exp(-0.115*H))
+    #     - equilibrium content for wetting (Equation 8b)
+    Ew = 0.618*H**0.753 + 10*np.exp((H-100)/10.) + 0.18*(21.1-T)*(1-np.exp(-0.115*H))
+    
+    # (3) Need to determine whether to apply wetting or drying phase.
+    #     - If yesterday's moisture content, m0 is greater than Ed, drying regime
+    #       prevails (equation 9)
+    dry_mask = m0>Ed
+    m[dry_mask] = Ed[dry_mask] + (m0[dry_mask] - Ed[dry_mask])*10**-kd[dry_mask]
+    #     - If m0 < Ew, wetting regime prevails (equation 10)
+    wet_mask = m0<Ew:
+    m[wet_mask] = Ew[wet_mask] - (Ew[wet_mask] - m0[wet_mask])*10**-kw[wet_mask]
+    #     - otherwise no change in moisture
+    
+    # (4) Now deal with moisture input due to rain
+    #     This decreases with increasing pptn rate and decreases with increased 
+    #     moisture content
+    #     Assume intercepted rainfall accounts for 0.5 mm
+    interecepted_mm = 0.5
+    P_ = P-intercepted_mm
+
+    # mask out cells for which there is insufficient rainfall to impact fine 
+    # litter layer
+    P_mask = P>intercepted_mm
+
+    m[P_mask] += P_[P_mask]*42.5*np.exp(-100/(251-m0[P_mask]))*(1-np.exp(-6.93/P_[P_mask])) # equation 12
+    # additional correction factor to account for case where moisture content is
+    # particularly high
+    m0_mask = m0[P_mask]>150
+    m[P_mask][m0_mask]+=0.0015*(m0[P_mask][m0_mask]-150)**2*P_[P_mask][m0_mask]**0.5 # equation 13
+    
+    FFMC = 59.5*(250-m)/(147.2+m)
+    return FFMC
+
+
+
 # Function to calculate the Duff Moisture Code (DMC). This deals with the
 # moisture content of the duff layer - the upper layers of the forest floor,
 # which are beginning to decay. Moisture in this layer is gained through inputs
