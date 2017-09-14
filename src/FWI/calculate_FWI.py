@@ -210,6 +210,22 @@ def calculate_ISI(FFMC,W):
 
     return ISI
 
+# Creating complementary set of functions for clarity - in this case, identical
+# to the above
+def calculate_ISI_array(FFMC,W):
+    
+    # (1) calculate wind speed effect
+    fW = np.exp(0.05039*W)
+    
+    # (2) calculate fuel moisture effect
+    m = 147.2*(101-FFMC)/(59.5+FFMC)
+    fm = 91.9*np.exp(-0.1386*m)*(1+(m**5.31)/(4.93*10**7))
+
+    # (3) combine into ISI
+    ISI = 0.208*fW*fm
+
+    return ISI
+
 # Function to calculate the Build-up Index (BUI)
 # Combines the duff and soil organic matter moisture levels to give an 
 # integrated picture of the potential fuel available for surface fuel
@@ -226,6 +242,7 @@ def calculate_ISI(FFMC,W):
 def calculate_BUI(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
     return BUI
+
 # Creating complementary set of functions for clarity - in this case, identical
 # to the above
 def calculate_BUI_array(DMC,DC):
