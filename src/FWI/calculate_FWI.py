@@ -184,7 +184,28 @@ def calculate_DC(T,P, DC0 = -9999, Lf = 0):
 
     # (3) calculate DC based on equation 22 and 26
     DC = 400*np.log(800./m) + 0.5*V
+    return DC
 
+# complimentary function to process arrays rather than individual floats
+# Note that initial DC required in this case (no default value), so this will
+# need pre-calculating
+def calculate_DC_array(T,P, DC0, Lf = 0):
+    m0 = np.exp(-DC0/400.)*800. # equation 22
+
+    # (1) rainfall phase. Assume that rainfall must be greater than 2.8 mm to
+    #     impact on soil moisture (I appreciate this is arbitrary!)
+    m = m0.copy()
+    precipitation_threshold_mm = 2.8
+    mask = P>precipitation_threshold_mm
+    P_=0.83*P-1.27             # equation 23
+    m[mask]+=3.937*P_[mask]    # equation 24
+
+    # (2) drying phase, i.e. potential evapotranspiration, V.  Use an empirical
+    #     equation (no idea what data this is based on).
+    V = 0.36*(T+2.8) + Lf
+
+    # (3) calculate DC based on equation 22 and 26
+    DC = 400*np.log(800./m) + 0.5*V
     return DC
 
 # Function to calculate the Initial Spread Index (ISI).
@@ -207,7 +228,6 @@ def calculate_ISI(FFMC,W):
 
     # (3) combine into ISI
     ISI = 0.208*fW*fm
-
     return ISI
 
 # Creating complementary set of functions for clarity - in this case, identical
@@ -223,7 +243,6 @@ def calculate_ISI_array(FFMC,W):
 
     # (3) combine into ISI
     ISI = 0.208*fW*fm
-
     return ISI
 
 # Function to calculate the Build-up Index (BUI)
@@ -272,7 +291,6 @@ def calculate_FWI(ISI,BUI):
     FWI = B.copy()
     if B>=1:
         FWI = np.exp(2.72*(0.434*np.log(B))**0.647)
-
     return FWI
 
 # equivalent function reading in numpy arrays rather than individual float
@@ -290,5 +308,4 @@ def calculate_FWI_array(ISI,BUI):
     B = 0.1 * ISI * fBUI
     FWI = B.copy()
     FWI[B>=1] = np.exp(2.72*(0.434*np.log(B[B>=1]))**0.647)
-
     return FWI
