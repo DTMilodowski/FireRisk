@@ -12,5 +12,19 @@
 # standard libraries
 import numpy
 from matplotlib import pyplot as plt
+
+import sys
+sys.paths.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/meteorology')
+
 # own libraries
-import 
+import calculate_FWI as FWI
+import load_ERAinterim as era
+
+#------------------------------------------------------------------------------
+# Load in the met data
+# - relative humidity in %
+# - air temperature in oC
+# - wind speed in m/s
+# - pptn in mm
+# - effective day length
+
