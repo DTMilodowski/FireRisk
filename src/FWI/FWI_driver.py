@@ -21,10 +21,21 @@ import calculate_FWI as FWI
 import load_ERAinterim as era
 
 #------------------------------------------------------------------------------
+# locate files
+path2files = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.175deg_Mexico'
+
+# Set up fire risk simulation params
+start_month = 1
+start_year = 2000
+end_month = 12
+end_year = 2012
+
 # Load in the met data
 # - relative humidity in %
 # - air temperature in oC
 # - wind speed in m/s
 # - pptn in mm
 # - effective day length
+
+
 
