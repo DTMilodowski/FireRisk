@@ -50,13 +50,13 @@ date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_
 
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
-land_mask = np.zeros((lat.size,lon.size))
+land_mask = np.zeros((lat.size,lon.size))*np.nan
 for ii in range(0,lat.size):
     for jj in range(0,lon.size):
         if bm.is_land(lon[jj],lat[ii]):
             land_mask[ii,jj] = 1
 
-
+# Now calculate FWI indices
 N_t = date.size
 
 FFMC = np.zeros(t2m.shape)
@@ -91,3 +91,11 @@ for tt in range(0,N_t):
     BUI[tt,:,:] = fwi.calculate_BUI_array(DMC,DC)
     ISI[tt,:,:] = fwi.calculate_ISI_array(FFMC,W)
     FWI[tt,:,:] = fwi.calculate_FWI_array(ISI,BUI)
+
+    # Apply land mask to layer
+    FFMC[tt,:,:]*=land_mask
+    DMC[tt,:,:]*=land_mask
+    DC[tt,:,:]*=land_mask
+    BUI[tt,:,:]*=land_mask
+    ISI[tt,:,:]*=land_mask
+    FWI[tt,:,:]*=land_mask
