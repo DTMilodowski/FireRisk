@@ -68,7 +68,7 @@ FWI = np.zeros(t2m.shape)
 
 for tt in range(0,N_t):
 
-    if tt = 0:
+    if tt == 0:
         # calculate FFMC
         FFMC0=np.zeros(t2m.shape)+FFMC_default
         FFMC[tt,:,:] = fwi.calculate_FFMC_array(rh,t2m,wind,prcp,FFMC0)
