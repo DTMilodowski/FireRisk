@@ -12,6 +12,7 @@
 # standard libraries
 import numpy
 from matplotlib import pyplot as plt
+from mpl_toolkits.basemap import Basemap
 
 import sys
 sys.paths.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/meteorology')
@@ -42,10 +43,14 @@ EffectiveDayLength = 10.
 # - wind speed in m/s
 # - pptn in mm
 # - effective day length
-temp, rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
-temp, wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
-temp, prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
-date, t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
+temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
+temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
+temp1,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
+date,lat,lon, t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
+
+# Mask out oceans so that land areas are only considered
+bm = Basemap()
+
 
 N_t = date.size
 
