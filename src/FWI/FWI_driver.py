@@ -10,12 +10,12 @@
 # object
 #==============================================================================
 # standard libraries
-import numpy
+import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
 import sys
-sys.paths.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/meteorology')
+sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/meteorology')
 
 # own libraries
 import calculate_FWI as fwi
@@ -50,6 +50,10 @@ date,lat,lon, t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start
 
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
+land_mask = np.zeros((lon.size,lat.size))
+for ii in range(0,lon.size):
+    for jj in range(0,lat.size):
+        land_mask[ii,jj] = bm.is_land(lon[ii],lat[jj])
 
 
 N_t = date.size
