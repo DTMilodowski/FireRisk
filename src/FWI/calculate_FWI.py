@@ -122,7 +122,7 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
     dry_mask = m0>Ed
     m[dry_mask] = Ed[dry_mask] + (m0[dry_mask] - Ed[dry_mask])*10**-kd[dry_mask]
     #     - If m0 < Ew, wetting regime prevails (equation 10)
-    wet_mask = m0<Ew:
+    wet_mask = m0<Ew
     m[wet_mask] = Ew[wet_mask] - (Ew[wet_mask] - m0[wet_mask])*10**-kw[wet_mask]
     #     - otherwise no change in moisture
     
