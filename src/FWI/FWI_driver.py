@@ -46,14 +46,15 @@ EffectiveDayLength = 10.
 temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
-date,lat,lon, t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
+date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
 
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
-land_mask = np.zeros((lon.size,lat.size))
-for ii in range(0,lon.size):
-    for jj in range(0,lat.size):
-        land_mask[ii,jj] = bm.is_land(lon[ii],lat[jj])
+land_mask = np.zeros((lat.size,lon.size))
+for ii in range(0,lat.size):
+    for jj in range(0,lon.size):
+        if bm.is_land(lon[jj],lat[ii]):
+            land_mask[ii,jj] = 1
 
 
 N_t = date.size
