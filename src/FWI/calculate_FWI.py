@@ -130,7 +130,7 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
     #     This decreases with increasing pptn rate and decreases with increased 
     #     moisture content
     #     Assume intercepted rainfall accounts for 0.5 mm
-    interecepted_mm = 0.5
+    intercepted_mm = 0.5
     P_ = P-intercepted_mm
 
     # mask out cells for which there is insufficient rainfall to impact fine 
