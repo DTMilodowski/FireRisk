@@ -33,7 +33,7 @@ end_year = 2016
 
 # Default params
 FFMC_default = 60.
-DMC0_default = 20.
+DMC_default = 20.
 DC_default = 200.
 EffectiveDayLength = 10.
 
