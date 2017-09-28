@@ -32,9 +32,9 @@ end_month = 12
 end_year = 2016
 
 # Default params
-FFMC0 = 60.
-DMC0 = 20.
-DC = 200.
+FFMC_default = 60.
+DMC0_default = 20.
+DC_default = 200.
 EffectiveDayLength = 10.
 
 # Load in the met data
@@ -45,7 +45,7 @@ EffectiveDayLength = 10.
 # - effective day length
 temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
-temp1,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
+dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
 date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
 
 # Mask out oceans so that land areas are only considered
@@ -67,7 +67,7 @@ ISI = np.zeros(t2m.shape)
 FWI = np.zeros(t2m.shape)
 
 for tt in range(0,N_t):
-
+    print "%i/%i" % (tt+1,N_t)
     if tt == 0:
         # calculate FFMC
         FFMC0=np.zeros(t2m.shape)+FFMC_default
