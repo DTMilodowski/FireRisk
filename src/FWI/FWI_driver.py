@@ -70,13 +70,13 @@ for tt in range(0,N_t):
     print "%i/%i" % (tt+1,N_t)
     if tt == 0:
         # calculate FFMC
-        FFMC0=np.zeros(t2m.shape[:-1])+FFMC_default
+        FFMC0=np.zeros(t2m.shape[1:])+FFMC_default
         FFMC[tt,:,:] = fwi.calculate_FFMC_array(rh[tt,:,:],t2m[tt,:,:],wind[tt,:,:],prcp[tt,:,:],FFMC0)
         # calculate DMC
-        DMC0=np.zeros(t2m.shape[:-1])+DMC_default
+        DMC0=np.zeros(t2m.shape[1:])+DMC_default
         DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],Le,DMC0)
         # calculate DC
-        DC0=np.zeros(t2m.shape[:-1])+DC_default
+        DC0=np.zeros(t2m.shape[1:])+DC_default
         DC[tt,:,:] = fwi.calculate_DC_array(t2m,prcp,DC0)
 
     else: 
