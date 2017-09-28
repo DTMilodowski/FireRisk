@@ -57,7 +57,7 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
     kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
     #     - wetting
     k0_w = 0.424*(1-((100-H)/100)**1.7) + 0.0694*W**0.5*(1-((100-H)/100)**8) # equation 5
-    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+    kw = k0_w * 0.581*np.exp(0.00365*T) # equation 6
 
     # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
     #     in % moisture content based on dry weight.
@@ -107,7 +107,7 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
     kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
     #     - wetting
     k0_w = 0.424*(1-((100-H)/100)**1.7) + 0.0694*W**0.5*(1-((100-H)/100)**8) # equation 5
-    kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
+    kw = k0_w * 0.581*np.exp(0.00365*T) # equation 6
 
     # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
     #     in % moisture content based on dry weight.
