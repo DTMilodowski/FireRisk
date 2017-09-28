@@ -74,10 +74,10 @@ for tt in range(0,N_t):
         FFMC[tt,:,:] = fwi.calculate_FFMC_array(rh[tt,:,:],t2m[tt,:,:],wind[tt,:,:],prcp[tt,:,:],FFMC0)
         # calculate DMC
         DMC0=np.zeros(t2m.shape[1:])+DMC_default
-        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],Le,DMC0)
+        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],EffectiveDayLength,DMC0)
         # calculate DC
         DC0=np.zeros(t2m.shape[1:])+DC_default
-        DC[tt,:,:] = fwi.calculate_DC_array(t2m,prcp,DC0)
+        DC[tt,:,:] = fwi.calculate_DC_array(t2m[tt,:,:],prcp[tt,:,:],DC0)
 
     else: 
         # calculate FFMC
@@ -89,7 +89,7 @@ for tt in range(0,N_t):
         
     # Calculate BUI, ISI and FWI
     BUI[tt,:,:] = fwi.calculate_BUI_array(DMC[tt,:,:],DC[tt,:,:])
-    ISI[tt,:,:] = fwi.calculate_ISI_array(FFMC[tt,:,:],W[tt,:,:])
+    ISI[tt,:,:] = fwi.calculate_ISI_array(FFMC[tt,:,:],wind[tt,:,:])
     FWI[tt,:,:] = fwi.calculate_FWI_array(ISI[tt,:,:],BUI[tt,:,:])
 
     # Apply land mask to layer
