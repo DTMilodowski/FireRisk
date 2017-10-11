@@ -28,43 +28,55 @@ plt.set_cmap(cmaps.inferno) # set inferno as default - a good fiery one :-)
 # Plot maps for all FWI indices at specified timestep
 def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
 
-    plt.figure(1, facecolor='White',figsize=[8,12])
+    fig = plt.figure(1, facecolor='White',figsize=[8,8])
 
     # Plot a -> the FFMC
     ax1a = plt.subplot2grid((3,2),(0,0))
-    ax1a.annotate('a - FFMC', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1a.annotate('a - FFMC', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     ax1a.set_ylabel('Latitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
-
+    
+    ax1a.imshow(FFMC[tstep,:,:], vmin = 0, vmax = 100)
+    
     # Plot b -> the DMC
     ax1b = plt.subplot2grid((3,2),(1,0))
-    ax1b.annotate('b - DMC', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1b.annotate('b - DMC', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     ax1b.set_ylabel('Latitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
+    
+    ax1b.imshow(DMC[tstep,:,:], vmin = 0, vmax = 300)
 
     # Plot c -> the DC
     ax1c = plt.subplot2grid((3,2),(2,0))
-    ax1c.annotate('c - DC', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1c.annotate('c - DC', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     ax1c.set_ylabel('Latitude',fontsize=axis_size)
     ax1c.set_xlabel('Longitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
+    ax1c.imshow(DC[tstep,:,:], vmin = 0, vmax = 1500)
+    
     # Plot d -> the ISI
     ax1d = plt.subplot2grid((3,2),(0,1))
-    ax1d.annotate('d - ISI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1d.annotate('d - ISI', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
+    ax1d.imshow(ISI[tstep,:,:], vmin = 0, vmax = np.nanmax(ISI))
+    
     # Plot e -> the BUI
     ax1e = plt.subplot2grid((3,2),(1,1))
-    ax1e.annotate('e - BUI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1e.annotate('e - BUI', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
+    ax1e.imshow(BUI[tstep,:,:], vmin = 0, vmax = 200)
+    
     # Plot f -> the FWI
     ax1f = plt.subplot2grid((3,2),(2,1))
-    ax1f.annotate('f - FWI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=10)
+    ax1f.annotate('f - FWI', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     ax1f.set_xlabel('Longitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
+    ax1f.imshow(FWI[tstep,:,:], vmin = 0, vmax = 40)
+    
     plt.show()
     return 0
 
