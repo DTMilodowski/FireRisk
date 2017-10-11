@@ -28,7 +28,7 @@ plt.set_cmap(cmaps.inferno) # set inferno as default - a good fiery one :-)
 # Plot maps for all FWI indices at specified timestep
 def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
 
-    fig = plt.figure(1, facecolor='White',figsize=[8,8])
+    fig = plt.figure(1, facecolor='White',figsize=[10,8])
 
     # Plot a -> the FFMC
     ax1a = plt.subplot2grid((3,2),(0,0))
