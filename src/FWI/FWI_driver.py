@@ -20,7 +20,7 @@ sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/E
 # own libraries
 import calculate_FWI as fwi
 import load_ERAinterim as era
-
+import plot_FWI as fwi_p
 #-------------------------------------------------------------------------------
 # locate files
 path2files = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.175deg_Mexico'
@@ -99,3 +99,4 @@ for tt in range(0,N_t):
     BUI[tt,:,:]*=land_mask
     ISI[tt,:,:]*=land_mask
     FWI[tt,:,:]*=land_mask
+
