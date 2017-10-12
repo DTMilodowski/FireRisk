@@ -216,8 +216,12 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
     #     - Assumes exponential drying, equilibrium moisture content 20%
     #     - Assumes kd proportional to temperature and relative "dryness"
     #     - Assumes kd proportional to day length -3 hours
+    #     - Requires temperatures to be greater than -1.1 degrees for any
+    #       drying to occur, otherwise kd is negative (this is set to 0 in this
+    #       case)
     kd = 1.894*(T+1.1)*(100-H)*Le*10**-6  # no equation number in manuscript
-
+    kd[kd<0]=0
+    
     # (2) Calculate wetting of DMC due to rain. Assumes increase in moisture
     #     inversely proportional to intensity of rainfall, and that wetting
     #     effect also decreases as initial moisture content increases
@@ -248,10 +252,16 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
 
     # Now recalculate DMC
     DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20.) # equation 16
-
+    
+    #DMC[DMC<0]=0 # DMC can't fall below zero (occurs due to rounding error)
+    
     # (3) Now account for drying 
     DMC += 100*kd # no equation number in manuscript
-
+    mmm = DMC<0
+    print T[mmm]
+    print kd[mmm]
+    
+    
     return DMC
 
 # Function to calculate the Drought Code, DC, which describes the moisture 
@@ -385,7 +395,7 @@ def calculate_BUI(DMC,DC):
 # to the above
 def calculate_BUI_array(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
-    mask = BUI<0
+    #mask = BUI<0
     return BUI
 
 # Function to calculate the Forest Weather Index (FWI)
