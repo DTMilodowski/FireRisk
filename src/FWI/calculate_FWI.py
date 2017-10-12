@@ -51,9 +51,9 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
     
     # (1) Calculate rate constants for wetting and drying
     #     Wetting and drying rates assumed to be exponential, with rate 
-    #     constants a function of temperature, windspeed and relative humidity
+    #     constants a function of temperature, windspeed and relative humidity.
     #     - drying
-    k0_d = 0.424*(1-(H/100)**1.7) + 0.0694*W**0.5*(1-(H/100)**8) # equation 4
+    k0_d = 0.424*(1-(H/100.)**1.7) + 0.0694*W**0.5*(1-(H/100.)**8) # equation 4
     kd = k0_d * 0.581*np.exp(0.00365*T) # equation 6
     #     - wetting
     k0_w = 0.424*(1-((100-H)/100)**1.7) + 0.0694*W**0.5*(1-((100-H)/100)**8) # equation 5
@@ -70,10 +70,10 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
     #     - If yesterday's moisture content, m0 is greater than Ed, drying regime
     #       prevails (equation 9)
     if m0>Ed:
-        m = Ed + (m0 - Ed)*10**-kd
+        m = Ed + (m0 - Ed)*10**(-kd)
     #     - If m0 < Ew, wetting regime prevails (equation 10)
     elif m0<Ew:
-        m = Ew - (Ew - m0)*10**-kw
+        m = Ew - (Ew - m0)*10**(-kw)
     #     - otherwise no change in moisture
     else:
         m=m0.copy()
@@ -88,13 +88,15 @@ def calculate_FFMC(H,T,W,P,FFMC0=-9999):
         m += P_*42.5*np.exp(-100/(251-m0))*(1-np.exp(-6.93/P_)) # equation 12
         if m0>150:
             m+=0.0015*(m0-150)**2*P_**0.5 # equation 13
-    
+    if m>250:
+        m=250
+            
     FFMC = 59.5*(250-m)/(147.2+m)
     return FFMC
 
 # Complimentary function to deal with numpy arrays efficiently. In this case the
 # inital conditions are a required input argument
-def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
+def calculate_FFMC_array(H,T,W,P,FFMC0):
 
     m0 = 147.2*(101-FFMC0)/(59.5+FFMC0)
     m = m0.copy()
@@ -109,6 +111,12 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
     k0_w = 0.424*(1.-((100-H)/100.)**1.7) + 0.0694*W**0.5*(1.-((100-H)/100.)**8) # equation 5
     kw = k0_w * 0.581*np.exp(0.00365*T) # equation 6
 
+    #     Note that where temperatures are negative, we assume that echange
+    #     with the atmosphere stops to avoid negative FFMC values.
+    #     otherwise this blows up equation 10.
+    kd[kd<0]=0
+    kw[kw<0]=0
+    
     # (2) Calculate equilibrium moisture contents for fine fuel load. Units are
     #     in % moisture content based on dry weight.
     #     - equilibrium content for drying (Equation 8a)
@@ -142,6 +150,11 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
     # particularly high
     m0_mask = m0[P_mask]>150
     m[P_mask][m0_mask]+=0.0015*(m0[P_mask][m0_mask]-150)**2*P_[P_mask][m0_mask]**0.5 # equation 13
+
+    # Maximum permitted moisture content for fine fuel load is 250%, therefore
+    # need to check that this has not been exceeded (likely due to precision
+    # errors in underlying equations)
+    m[m>250]=250
     
     FFMC = 59.5*(250-m)/(147.2+m)
     return FFMC
@@ -158,7 +171,7 @@ def calculate_FFMC_array(H,T,W,P,FFMC0=-9999):
 # (2) air temperature in oC
 # (3) Precipitation in mm
 # (4) Effective day length in hours, Le, assumed to be 3hrs less than actual day
-#     length
+#     lengthre
 # (5) Previous days DMC value (default is -9999, for which we need to estimate
 #     starting DMC)
 def calculate_DMC(H,T,P,Le,DMC0=-9999):
@@ -366,11 +379,15 @@ def calculate_ISI_array(FFMC,W):
     
     # (2) calculate fuel moisture effect
     m = 147.2*(101-FFMC)/(59.5+FFMC)
+    mask = np.isnan(m)
+    print FFMC[mask]
+    print W[mask]
+    print m[mask]
     fm = 91.9*np.exp(-0.1386*m)*(1+(m**5.31)/(4.93*10**7))
-
+    print fm[mask]
     # (3) combine into ISI
     ISI = 0.208*fW*fm
-    return ISI
+    return ISI, mask
 
 # Function to calculate the Build-up Index (BUI)
 # Combines the duff and soil organic matter moisture levels to give an 
@@ -393,7 +410,6 @@ def calculate_BUI(DMC,DC):
 # to the above
 def calculate_BUI_array(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
-    #mask = BUI<0
     return BUI
 
 # Function to calculate the Forest Weather Index (FWI)
