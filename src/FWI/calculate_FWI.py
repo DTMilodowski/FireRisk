@@ -317,6 +317,11 @@ def calculate_DC(T,P, DC0 = -9999, Lf = 0):
     #     equation (no idea what data this is based on).
     V = 0.36*(T+2.8) + Lf
 
+    # The above emipirical relationship obviously fails when temperatures are
+    # cold. Set this case to 0
+    if V<0:
+        V=0
+
     # (3) calculate DC based on equation 22 and 26
     DC = 400*np.log(800./m) + 0.5*V
     return DC
@@ -344,6 +349,10 @@ def calculate_DC_array(T,P, DC0, Lf = 0):
     #     equation (no idea what data this is based on).
     V = 0.36*(T+2.8) + Lf
 
+    # The above emipirical relationship obviously fails when temperatures are
+    # cold. Set this case to 0
+    V[V<0] = 0
+    
     # (3) calculate DC based on equation 22 and 26
     DC = 400*np.log(800./m) + 0.5*V
     return DC
