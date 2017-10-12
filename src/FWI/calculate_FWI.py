@@ -379,15 +379,11 @@ def calculate_ISI_array(FFMC,W):
     
     # (2) calculate fuel moisture effect
     m = 147.2*(101-FFMC)/(59.5+FFMC)
-    mask = np.isnan(m)
-    print FFMC[mask]
-    print W[mask]
-    print m[mask]
     fm = 91.9*np.exp(-0.1386*m)*(1+(m**5.31)/(4.93*10**7))
-    print fm[mask]
+    
     # (3) combine into ISI
     ISI = 0.208*fW*fm
-    return ISI, mask
+    return ISI
 
 # Function to calculate the Build-up Index (BUI)
 # Combines the duff and soil organic matter moisture levels to give an 
