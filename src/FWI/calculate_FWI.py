@@ -288,6 +288,11 @@ def calculate_DC(T,P, DC0 = -9999, Lf = 0):
         P_=0.83*P-1.27 # equation 23
         m+=3.937*P_    # equation 24
 
+    # make sure that m is <=800 (an assumption in the FWI is that the maximum
+    # moisture content of the soil layer is 800%
+    if m > 800:
+        m=800
+        
     # (2) drying phase, i.e. potential evapotranspiration, V.  Use an empirical
     #     equation (no idea what data this is based on).
     V = 0.36*(T+2.8) + Lf
@@ -311,6 +316,10 @@ def calculate_DC_array(T,P, DC0, Lf = 0):
     P_[mask]=0.83*P[mask]-1.27             # equation 23
     m+=3.937*P_    # equation 24
 
+    # make sure that m is <=800 (an assumption in the FWI is that the maximum
+    # moisture content of the soil layer is 800%
+    m[m>800]=800
+    
     # (2) drying phase, i.e. potential evapotranspiration, V.  Use an empirical
     #     equation (no idea what data this is based on).
     V = 0.36*(T+2.8) + Lf
