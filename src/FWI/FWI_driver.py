@@ -91,7 +91,7 @@ for tt in range(0,N_t):
         
     # Calculate BUI, ISI and FWI
     BUI[tt,:,:] = fwi.calculate_BUI_array(DMC[tt,:,:],DC[tt,:,:])
-    ISI[tt,:,:],mask = fwi.calculate_ISI_array(FFMC[tt,:,:],wind[tt,:,:])
+    ISI[tt,:,:]= fwi.calculate_ISI_array(FFMC[tt,:,:],wind[tt,:,:])
     FWI[tt,:,:] = fwi.calculate_FWI_array(ISI[tt,:,:],BUI[tt,:,:])
     
     # Apply land mask to layer
