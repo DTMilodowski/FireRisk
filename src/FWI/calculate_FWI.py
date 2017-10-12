@@ -257,10 +257,6 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
     
     # (3) Now account for drying 
     DMC += 100*kd # no equation number in manuscript
-    mmm = DMC<0
-    print T[mmm]
-    print kd[mmm]
-    
     
     return DMC
 
