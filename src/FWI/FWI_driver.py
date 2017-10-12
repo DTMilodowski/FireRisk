@@ -48,7 +48,7 @@ temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,s
 dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
 date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
 prcp*=1000
-
+prcp[prcp<0]=0
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
 land_mask = np.zeros((lat.size,lon.size))*np.nan
@@ -68,7 +68,8 @@ ISI = np.zeros(t2m.shape)
 FWI = np.zeros(t2m.shape)
 
 for tt in range(0,N_t):
-    print "%i/%i" % (tt+1,N_t)
+    if (tt+1)%100 == 0:
+        print "%i/%i" % (tt+1,N_t)
     if tt == 0:
         # calculate FFMC
         FFMC0=np.zeros(t2m.shape[1:])+FFMC_default
@@ -90,9 +91,9 @@ for tt in range(0,N_t):
         
     # Calculate BUI, ISI and FWI
     BUI[tt,:,:] = fwi.calculate_BUI_array(DMC[tt,:,:],DC[tt,:,:])
-    ISI[tt,:,:] = fwi.calculate_ISI_array(FFMC[tt,:,:],wind[tt,:,:])
+    ISI[tt,:,:],mask = fwi.calculate_ISI_array(FFMC[tt,:,:],wind[tt,:,:])
     FWI[tt,:,:] = fwi.calculate_FWI_array(ISI[tt,:,:],BUI[tt,:,:])
-
+    
     # Apply land mask to layer
     FFMC[tt,:,:]*=land_mask
     DMC[tt,:,:]*=land_mask
@@ -100,4 +101,7 @@ for tt in range(0,N_t):
     BUI[tt,:,:]*=land_mask
     ISI[tt,:,:]*=land_mask
     FWI[tt,:,:]*=land_mask
+    
+tstep = -1
+fwi_p.plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep)
 
