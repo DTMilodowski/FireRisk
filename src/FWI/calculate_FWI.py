@@ -173,7 +173,9 @@ def calculate_DMC(H,T,P,Le,DMC0=-9999):
     #     - Assumes kd proportional to temperature and relative "dryness"
     #     - Assumes kd proportional to day length -3 hours
     kd = 1.894*(T+1.1)*(100-H)*Le*10**-6  # no equation number in manuscript
-
+    if kd<0:
+        kd=0
+    
     # (2) Calculate wetting of DMC due to rain. Assumes increase in moisture
     #     inversely proportional to intensity of rainfall, and that wetting
     #     effect also decreases as initial moisture content increases
