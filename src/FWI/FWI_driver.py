@@ -39,14 +39,14 @@ EffectiveDayLength = 10.
 
 # Load in the met data
 # - relative humidity in %
-# - air temperature in oC
+# - air temperature in oC - this should ideally be noontime temperature (~peak temperature)
 # - wind speed in m/s
 # - pptn in mm (need to convert from metres)
 # - effective day length
 temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
 dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
-date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
+date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'mx2t',start_month,start_year,end_month,end_year)
 prcp*=1000
 prcp[prcp<0]=0
 # Mask out oceans so that land areas are only considered
@@ -101,7 +101,8 @@ for tt in range(0,N_t):
     BUI[tt,:,:]*=land_mask
     ISI[tt,:,:]*=land_mask
     FWI[tt,:,:]*=land_mask
-    
+
+# example plot
 tstep = -1
 fwi_p.plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep)
 
