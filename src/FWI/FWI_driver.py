@@ -41,12 +41,13 @@ EffectiveDayLength = 10.
 # - relative humidity in %
 # - air temperature in oC
 # - wind speed in m/s
-# - pptn in mm
+# - pptn in mm (need to convert from metres)
 # - effective day length
 temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
 dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
 date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'t2m',start_month,start_year,end_month,end_year)
+prcp*=1000
 
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
