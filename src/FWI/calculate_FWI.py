@@ -185,13 +185,13 @@ def calculate_DMC(H,T,P,Le,DMC0=-9999):
         b = 0
         # equations 19 a,b,c
         if DMC0 <= 33:
-            b = 100/(0.5+0.3*DMC0)
+            b = 100./(0.5+0.3*DMC0)
         elif DMC0 <= 65:
-            b = 14 - 1.3*np.log(DMC0)
+            b = 14. - 1.3*np.log(DMC0)
         else:
             b = 6.2*np.log(DMC0) - 17.2
 
-        m+=1000*P_/(48.77+b*P_) # equation 18
+        m+=1000.*P_/(48.77+b*P_) # equation 18
         
         # Now recalculate DMC
         DMC = 244.72 - 43.43*np.log(m-20) # equation 16
@@ -231,14 +231,14 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
     DMC_mask_a = DMC0[P_mask] <= 33
     DMC_mask_b = np.all((DMC0[P_mask] <= 33, DMC0[P_mask] <= 65),axis=0)
     DMC_mask_c = DMC0[P_mask] > 65
-    b[P_mask][DMC_mask_a] = 100/(0.5+0.3*DMC0[P_mask][DMC_mask_a])
-    b[P_mask][DMC_mask_b] = 14 - 1.3*np.log(DMC0[P_mask][DMC_mask_b])
+    b[P_mask][DMC_mask_a] = 100./(0.5+0.3*DMC0[P_mask][DMC_mask_a])
+    b[P_mask][DMC_mask_b] = 14. - 1.3*np.log(DMC0[P_mask][DMC_mask_b])
     b[P_mask][DMC_mask_c] = 6.2*np.log(DMC0[P_mask][DMC_mask_c]) - 17.2
 
-    m[P_mask]+=1000*P_[P_mask]/(48.77+b[P_mask]*P_[P_mask]) # equation 18
-        
+    m[P_mask]+=1000.*P_[P_mask]/(48.77+b[P_mask]*P_[P_mask]) # equation 18
+    
     # Now recalculate DMC
-    DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20) # equation 16
+    DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20.) # equation 16
 
     # (3) Now account for drying 
     DMC += 100*kd # no equation number in manuscript
@@ -259,7 +259,7 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
 #  in any case, day length is relatively insensitive to season due to the low
 #  lattitudes
 # Inputs are:
-# (1) air temperature in oC
+# (1) air temperature in oC (noon temperature is suggested in documentation)
 # (2) Precipitation in mm
 # (3) Previous days DC value (default is -9999, for which we need to estimate
 #     starting DC)
