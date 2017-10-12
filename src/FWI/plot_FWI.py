@@ -45,7 +45,7 @@ def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
     ax1b.set_ylabel('Latitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
     
-    b_plot = ax1b.imshow(DMC[tstep,:,:], vmin = 0)#, vmin = 0, vmax = 300)
+    b_plot = ax1b.imshow(DMC[tstep,:,:], vmin = 0, vmax = 200)
     plt.colorbar(b_plot,ax=ax1b)
 
     # Plot c -> the DC
@@ -55,7 +55,7 @@ def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
     ax1c.set_xlabel('Longitude',fontsize=axis_size)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
-    c_plot =ax1c.imshow(DC[tstep,:,:], vmin = 0)#, vmin = 0, vmax = 1500)
+    c_plot =ax1c.imshow(DC[tstep,:,:], vmin = 0, vmax = 2000)
     plt.colorbar(c_plot,ax=ax1c)
     
     # Plot d -> the ISI
@@ -71,7 +71,7 @@ def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
     ax1e.annotate('e - BUI', xy=(0.05,0.05), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='bottom', fontsize=10)
     plt.gca().set_aspect('equal', adjustable='box-forced')
 
-    e_plot = ax1e.imshow(BUI[tstep,:,:], vmin = 0)#, vmin = 0, vmax = 200)
+    e_plot = ax1e.imshow(BUI[tstep,:,:], vmin = 0, vmax = np.nanmax(BUI))#, vmin = 0, vmax = 200)
     plt.colorbar(e_plot,ax=ax1e)
     
     # Plot f -> the FWI
