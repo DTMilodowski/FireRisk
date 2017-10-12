@@ -245,8 +245,7 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
     # make sure that m is <=300 (an assumption in the FWI is that the maximum
     # moisture content of the duff layer is 300%
     m[m>300]=300
-    
-    #print np.sum(m>300)
+
     # Now recalculate DMC
     DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20.) # equation 16
 
@@ -387,9 +386,6 @@ def calculate_BUI(DMC,DC):
 def calculate_BUI_array(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
     mask = BUI<0
-    #print BUI[mask]
-    #print DC[mask]
-    #print DMC[mask]
     return BUI
 
 # Function to calculate the Forest Weather Index (FWI)
@@ -432,6 +428,6 @@ def calculate_FWI_array(ISI,BUI):
     # (2) Now calculate the FWI
     B = 0.1 * ISI * fBUI
     FWI = B.copy()
-    mask = BUI>=1
+    mask = B>=1
     FWI[mask] = np.exp(2.72*(0.434*np.log(B[mask]))**0.647)
     return FWI
