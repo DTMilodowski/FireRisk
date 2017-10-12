@@ -30,7 +30,7 @@
 #          DC
 #==============================================================================
 import numpy as np
-
+from matplotlib import pyplot as plt
 # Function to calculate the Fine Fuel Moisture Code.  This describes the
 # moisture status of the fine litter, and is particularly important for in
 # determining the ISI, as ignition likelihood is strongly dependent on the
@@ -193,6 +193,11 @@ def calculate_DMC(H,T,P,Le,DMC0=-9999):
 
         m+=1000.*P_/(48.77+b*P_) # equation 18
         
+        # make sure that m is <=300 (an assumption in the FWI is that the maximum
+        # moisture content of the duff layer is 300%
+        if m>300:
+            m=300
+            
         # Now recalculate DMC
         DMC = 244.72 - 43.43*np.log(m-20) # equation 16
 
@@ -224,24 +229,30 @@ def calculate_DMC_array(H,T,P,Le,DMC0):
     # generate a mask to highlight cells that have received sufficient rainfall
     # to impact on duff layer
     P_mask = P>precipitation_threshold_mm
-
-    P_=0.92*P-1.27 # equation 17
-
-    # equations 19 a,b,c
-    DMC_mask_a = DMC0[P_mask] <= 33
-    DMC_mask_b = np.all((DMC0[P_mask] <= 33, DMC0[P_mask] <= 65),axis=0)
-    DMC_mask_c = DMC0[P_mask] > 65
-    b[P_mask][DMC_mask_a] = 100./(0.5+0.3*DMC0[P_mask][DMC_mask_a])
-    b[P_mask][DMC_mask_b] = 14. - 1.3*np.log(DMC0[P_mask][DMC_mask_b])
-    b[P_mask][DMC_mask_c] = 6.2*np.log(DMC0[P_mask][DMC_mask_c]) - 17.2
-
-    m[P_mask]+=1000.*P_[P_mask]/(48.77+b[P_mask]*P_[P_mask]) # equation 18
+    P_ = np.zeros(P.shape)
+    P_[P_mask]=0.92*P[P_mask]-1.27 # equation 17
     
+    # equations 19 a,b,c
+    DMC_mask_a = DMC0 <= 33
+    DMC_mask_b = np.all((DMC0 > 33, DMC0 <= 65),axis=0)
+    DMC_mask_c = DMC0 > 65
+    
+    b[DMC_mask_a] = 100./(0.5+0.3*DMC0[DMC_mask_a])
+    b[DMC_mask_b] = 14. - 1.3*np.log(DMC0[DMC_mask_b])
+    b[DMC_mask_c] = 6.2*np.log(DMC0[DMC_mask_c]) - 17.2
+    
+    m+=1000.*P_/(48.77+b*P_) # equation 18
+    # make sure that m is <=300 (an assumption in the FWI is that the maximum
+    # moisture content of the duff layer is 300%
+    m[m>300]=300
+    
+    #print np.sum(m>300)
     # Now recalculate DMC
     DMC[P_mask] = 244.72 - 43.43*np.log(m[P_mask]-20.) # equation 16
 
     # (3) Now account for drying 
     DMC += 100*kd # no equation number in manuscript
+
     return DMC
 
 # Function to calculate the Drought Code, DC, which describes the moisture 
@@ -296,8 +307,9 @@ def calculate_DC_array(T,P, DC0, Lf = 0):
     m = m0.copy()
     precipitation_threshold_mm = 2.8
     mask = P>precipitation_threshold_mm
-    P_=0.83*P-1.27             # equation 23
-    m[mask]+=3.937*P_[mask]    # equation 24
+    P_=np.zeros(P.shape)
+    P_[mask]=0.83*P[mask]-1.27             # equation 23
+    m+=3.937*P_    # equation 24
 
     # (2) drying phase, i.e. potential evapotranspiration, V.  Use an empirical
     #     equation (no idea what data this is based on).
@@ -365,6 +377,10 @@ def calculate_BUI(DMC,DC):
 # to the above
 def calculate_BUI_array(DMC,DC):
     BUI = 0.8*DMC*DC/(DMC+0.4*DC) # equation 36
+    mask = BUI<0
+    #print BUI[mask]
+    #print DC[mask]
+    #print DMC[mask]
     return BUI
 
 # Function to calculate the Forest Weather Index (FWI)
@@ -381,7 +397,7 @@ def calculate_FWI(ISI,BUI):
     #     (equations 38 a and b)
     fBUI=0
     if BUI<=80.:
-        fBUI = 0.626*BUI**0.809 +2
+        fBUI = 0.626*BUI**0.809 + 2.
     else:
         fBUI = 1000./(25. + 108.64*np.exp(-0.023*BUI))
 
@@ -400,11 +416,13 @@ def calculate_FWI_array(ISI,BUI):
     #     translate the available fuel (BUI) into an index of burn intensity
     #     (equations 38 a and b)
     fBUI=np.zeros(ISI.shape)
-    fBUI[BUI<=80] = 0.626*BUI[BUI<=80]**0.809 + 2.
-    fBUI[BUI>80] = 1000./(25. + 108.64*np.exp(-0.023*BUI[BUI>80]))
+    mask = BUI<=80
+    fBUI[mask] = 0.626*BUI[mask]**0.809 + 2.
+    fBUI[~mask] = 1000./(25. + 108.64*np.exp(-0.023*BUI[~mask]))
 
     # (2) Now calculate the FWI
     B = 0.1 * ISI * fBUI
     FWI = B.copy()
-    FWI[B>=1] = np.exp(2.72*(0.434*np.log(B[B>=1]))**0.647)
+    mask = BUI>=1
+    FWI[mask] = np.exp(2.72*(0.434*np.log(B[mask]))**0.647)
     return FWI
