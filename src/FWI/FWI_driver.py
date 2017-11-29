@@ -107,8 +107,8 @@ tstep = -1
 fwi_p.plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep)
 
 
-start_tstep = 100
-end_tstep = 160
-row = 100
+start_tstep = 0
+end_tstep = 10000
+row = 60
 col = 100
-fwi_p.plot_FWI_indices_time_series_for_pixel(t2m,prcp,rh,wind,FFMC,DMC,DC,ISI,BUI,FWI,date,start_tstep,end_tstep,row,col)
+fwi_p.plot_FWI_indices_time_series_for_pixel(t2m,prcp,rh,wind,FFMC/np.nanmax(FFMC),DMC/np.nanmax(DMC),DC/np.nanmax(DC),ISI/np.nanmax(ISI),BUI/np.nanmax(BUI),FWI,date,start_tstep,end_tstep,row,col)
