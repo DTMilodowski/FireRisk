@@ -106,3 +106,9 @@ for tt in range(0,N_t):
 tstep = -1
 fwi_p.plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep)
 
+
+start_tstep = 100
+end_tstep = 160
+row = 100
+col = 100
+fwi_p.plot_FWI_indices_time_series_for_pixel(t2m,prcp,rh,wind,FFMC,DMC,DC,ISI,BUI,FWI,date,start_tstep,end_tstep,row,col)
