@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA
+from datetime import datetime
 
 import sys
 
@@ -92,12 +93,13 @@ def plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep):
 
 
 # Plot time series for all FWI indices at specified timestep
-def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates,start_tstep,end_tstep,row,col):
+def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,date,start_tstep,end_tstep,row,col):
     if start_tstep < 0:
         start_tstep = 0
     if end_tstep > FWI.size:
         end_tstep = FWI.size
-        
+
+    dates = date.astype(datetime)
     plt.figure(2, facecolor='White',figsize=[8,12])
     # plot a -> relative humidity & mean temperature
     ax_a1 = host_subplot(511, axes_class=AA.Axes)
@@ -110,7 +112,7 @@ def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates
     ax_a2.plot(dates[start_tstep:end_tstep],T[start_tstep:end_tstep,row,col],'-',c=colour[2])
     
     # plot b -> precipitation & wind speed
-    ax_b1 = host_subplot(512, axes_class=AA.Axes)
+    ax_b1 = host_subplot(512, axes_class=AA.Axes,sharex = ax_a1)
     ax_b2 = ax_b1.twinx()
     ax_b1.annotate('b - precipitation & wind speed', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
     ax_b1.set_ylabel('precipitation / mm',fontsize=axis_size, color = colour[1])
@@ -120,7 +122,7 @@ def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates
     ax_b2.plot(dates[start_tstep:end_tstep],W[start_tstep:end_tstep,row,col],'-',c=colour[2])
     
     # plot c -> the FFMC, DMC and DC
-    ax_c1 = host_subplot(513, axes_class=AA.Axes)
+    ax_c1 = host_subplot(513, axes_class=AA.Axes,sharex = ax_a1)
     ax_c2 = ax_c1.twinx()
     ax_c3 = ax_c1.twinx()
     offset = 60
@@ -137,7 +139,7 @@ def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates
     ax_c3.plot(dates[start_tstep:end_tstep],DC[start_tstep:end_tstep,row,col],'-',c=colour[0])
 
     # plot d -> the BUI & ISI
-    ax_d1 = host_subplot(514, axes_class=AA.Axes)
+    ax_d1 = host_subplot(514, axes_class=AA.Axes,sharex = ax_a1)
     ax_d2 = ax_d1.twinx()
     ax_d1.annotate('d -ISI & BUI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
     ax_d1.set_ylabel('ISI',fontsize=axis_size, color = colour[1])
@@ -147,7 +149,7 @@ def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates
     ax_d2.plot(dates[start_tstep:end_tstep],BUI[start_tstep:end_tstep,row,col],'-',c=colour[2])
 
     # plot e -> the FWI
-    ax_e1 = host_subplot(515, axes_class=AA.Axes)
+    ax_e1 = host_subplot(515, axes_class=AA.Axes,sharex = ax_a1)
     ax_e1.annotate('e -FWI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
     ax_e1.set_ylabel('FWI',fontsize=axis_size, color = colour[2])
     ax_e1.set_xlabel('timestep / days',fontsize=axis_size)
@@ -156,6 +158,7 @@ def plot_FWI_indices_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dates
 
     
     # plot f -> the burned area (tbc)
+    ax_a1.set_xlim(xmin=dates[start_tstep],xmax=dates[end_tstep])
     plt.tight_layout()
     plt.show()
 
