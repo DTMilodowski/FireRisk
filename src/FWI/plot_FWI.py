@@ -172,7 +172,7 @@ def plot_fuel_moisture_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dat
     # fine fuel moisture
     m_FF = 147.2*(101-FFMC)/(59.5+FFMC)
     # duff layer moisture
-    m_DF = 20+np.exp((DMC-244.73)/(-43.43))
+    m_DF = (20+np.exp((DMC-244.73)/(-43.43)))
     # soil moisure
     m_D = np.exp(-DC/400.)*800.
     
@@ -219,6 +219,10 @@ def plot_fuel_moisture_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dat
     ax_c1.plot(dates[start_tstep:end_tstep],m_FF[start_tstep:end_tstep,row,col],'-',c=colour[1])
     ax_c2.plot(dates[start_tstep:end_tstep],m_DF[start_tstep:end_tstep,row,col],'-',c=colour[2])
     ax_c3.plot(dates[start_tstep:end_tstep],m_D[start_tstep:end_tstep,row,col],'-',c=colour[0])
+
+    ax_c1.set_ylim(0,250)
+    ax_c2.set_ylim(0,300)
+    ax_c3.set_ylim(0,800)
 
     # plot d -> the BUI & ISI
     ax_d1 = host_subplot(514, axes_class=AA.Axes,sharex = ax_a1)
