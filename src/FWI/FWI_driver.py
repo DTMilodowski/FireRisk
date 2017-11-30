@@ -47,6 +47,8 @@ temp1,temp2,temp3,rh = era.calculate_rh_daily(path2files,start_month,start_year,
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2files,start_month,start_year,end_month,end_year)
 dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2files,'prcp',start_month,start_year,end_month,end_year)
 date,lat,lon,t2m = era.load_ERAinterim_daily(path2files,'mx2t',start_month,start_year,end_month,end_year)
+t2m=t2m[:rh.shape[0],:,:]
+date=date[:rh.shape[0]]
 prcp*=1000
 prcp[prcp<0]=0
 # Mask out oceans so that land areas are only considered
@@ -107,8 +109,9 @@ tstep = -1
 fwi_p.plot_FWI_indices_for_tstep(FFMC,DMC,DC,ISI,BUI,FWI,tstep)
 
 
-start_tstep = 0
-end_tstep = 10000
+start_tstep = 600
+end_tstep = 1200
 row = 60
 col = 100
-fwi_p.plot_FWI_indices_time_series_for_pixel(t2m,prcp,rh,wind,FFMC/np.nanmax(FFMC),DMC/np.nanmax(DMC),DC/np.nanmax(DC),ISI/np.nanmax(ISI),BUI/np.nanmax(BUI),FWI,date,start_tstep,end_tstep,row,col)
+fwi_p.plot_FWI_indices_time_series_for_pixel(t2m,prcp,rh,wind,FFMC,DMC,DC,ISI,BUI,FWI,date,start_tstep,end_tstep,row,col)
+fwi_p.plot_fuel_moisture_time_series_for_pixel(t2m,prcp,rh,wind,FFMC,DMC,DC,ISI,BUI,FWI,date,start_tstep,end_tstep,row,col)
