@@ -35,6 +35,8 @@ import load_ERAinterim as era
 sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/fire/')
 import load_GFED as GFED
 
+import resample_raster as resample
+
 
 # Bounding box for Mexico
 W = -118.15
@@ -136,4 +138,50 @@ for tt in range(0,N_t):
 FWI_npyfile = 'Mexico_FWI.npz'
 np.savez(FWI_npyfile,FFMC=FFMC,DMC=DMC,DC=DC,BUI=BUI,ISI=ISI,FWI=FWI)
 
-# Resample FWI so that it matches GFED resolution
+# Resample FWI so that it matches GFED resolution in space and time
+
+FWI_resample = np.zeros(burned_area.shape)
+FWI_month = date.astype('datetime64[M]')
+n_months = dates_gfed.size
+for mm in range(0,n_months):
+    month_mask = FWI_month==dates_gfed[mm]
+    FWI_temp = np.mean(FWI[month_mask],axis=0)
+    FWI_resample[mm] = resample.resample_nearest_neighbour(FWI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+
+FWI_temp = FWI_resample.reshape(FWI_resample.size)
+mask = np.isfinite(FWI_temp)
+FWI_all = FWI_temp[mask]
+burned_area_all = burned_area.reshape(burned_area.size)[mask]
+burned_event_all = np.zeros(burned_area_all.size)
+burned_event_all[burned_area_sort>0]=1
+
+sort_indices = np.argsort(FWI_all)
+
+FWI_sort = FWI_all[sort_indices]
+burned_area_sort = burned_area_all[sort_indices]
+burned_area_cumsum = np.cumsum(burned_area_sort)
+
+burned_event_sort = burned_event_all[sort_indices]
+burned_event_cumsum= np.cumsum(burned_event_sort)
+
+FWI_threshold = np.arange(0,51)
+n_thresh=FWI_threshold.size
+hit_rate = np.zeros(n_thresh)
+false_alarm_rate = np.zeros(n_thresh)
+
+for tt in range(0,n_thresh):
+    event_predicted = FWI_all>=FWI_threshold[tt]
+    nonevent_predicted = FWI_all<FWI_threshold[tt]
+    event_observed = burned_area_all>0
+    nonevent_observed =  burned_area_all<=0
+
+    a = np.sum(np.all((event_predicted,event_observed),axis=0))
+    b = np.sum(np.all((event_predicted,nonevent_observed),axis=0))
+    c = np.sum(np.all((nonevent_predicted,event_observed),axis=0))
+    d = np.sum(np.all((nonevent_predicted,nonevent_observed),axis=0))
+
+    hit_rate[tt] = float(a)/float(a+c)
+    false_alarm_rate[tt] = float(b)/float(b+d)
+    
+# calculate EDI
+EDI = (np.log(false_alarm_rate)-np.log(hit_rate))/(np.log(false_alarm_rate)+np.log(hit_rate))
