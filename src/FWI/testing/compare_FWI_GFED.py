@@ -148,12 +148,17 @@ for mm in range(0,n_months):
     FWI_temp = np.mean(FWI[month_mask],axis=0)
     FWI_resample[mm] = resample.resample_nearest_neighbour(FWI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
 
+
+
+
+
+    
 FWI_temp = FWI_resample.reshape(FWI_resample.size)
 mask = np.isfinite(FWI_temp)
 FWI_all = FWI_temp[mask]
 burned_area_all = burned_area.reshape(burned_area.size)[mask]
 burned_event_all = np.zeros(burned_area_all.size)
-burned_event_all[burned_area_sort>0]=1
+burned_event_all[burned_area_all>0]=1
 
 sort_indices = np.argsort(FWI_all)
 
