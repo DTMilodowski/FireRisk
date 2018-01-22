@@ -38,7 +38,7 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
         if timestep_axis == 0:
             target_variable_vector = np.ravel(target_variable)
         
-    dep_variables_matrix = np.zeros((n_vars,n))-9999.
+    dep_variables_matrix = np.zeros((n,n_vars))-9999.
     
     # Loop through the dependent variables and check that we have the correct
     # dimensions, then load into matrices if ok
@@ -46,11 +46,11 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
         var = dependent_variables_dict[variables[vv]]
         var_dimensions = np.asarray(var.shape)
         if time_series==True:            
-            n_steps = target_variables.shape[timestep_axis]
-            if var.shape == target_variables.shape:
+            n_steps = target_variable.shape[timestep_axis]
+            if var.shape == target_variable.shape:
                 print '\t',variables[vv],'\t',var.shape,'\ttime series'
                 if timestep_axis == 0:
-                    dep_variables_matrix[vv,:]=np.ravel(var)
+                    dep_variables_matrix[:,vv]=np.ravel(var)
             else:
                 axes = np.arange(target_variations.size)
                 data_dimensions = np.asarray(target_variable.shape)[axes!=timestep_axis]
@@ -58,19 +58,24 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
                 if np.asarray(var.shape)==data_dimensions:
                     print '\t',variables[vv],'\t',var.shape,'\tconstant'
                     for tt in range(0,n_steps):
-                        dep_variables_matrix[vv,tt*n_data:(tt+1)*n_data] = np.ravel(var)
+                        dep_variables_matrix[tt*n_data:(tt+1)*n_data,vv] = np.ravel(var)
                     else:
                         print '\tERROR - dimensions not consistent'
 
         # Simple case for non time series data
         else:
             print '\t',variables[vv],'\t',var.shape
-            if var.shape == target_variables.shape:
-                dep_variables_matrix[vv,:]=np.ravel(var)
+            if var.shape == target_variable.shape:
+                dep_variables_matrix[:,vv]=np.ravel(var)
             else:
                 print '\tERROR - dimensions not consistent'
-                
-    return dep_variables_matrix, target_variable_vector, variables
+
+    # Finally mask out rows containing nans etc.
+    dep_finite = np.sum(np.isfinite(dep_variables_matrix),axis=1)==n_vars
+    target_finite = np.isfinite(target_variable_vector)
+    mask = np.all((dep_finite,target_finite),axis=0)
+    
+    return dep_variables_matrix[mask], target_variable_vector[mask], variables
 
 # Calibrate and validate the random forest regression model
 # Inputs are the matrix of dependent variables, and the associated vector of
