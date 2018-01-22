@@ -49,7 +49,7 @@ S = 14
 start_month = 1
 start_year = 2000
 end_month = 12
-end_year = 2000
+end_year = 2016
 
 # First load in the GFED data
 print 'Loading GFED'
@@ -188,8 +188,8 @@ FWI_vars['DC']=DC_resample.copy()
 FWI_matrix, burned_area_vector, FWI_names = rf.construct_variables_matrices(FWI_vars,burned_area,time_series=True)
 model1, cal_score1, val_score1, importance1 = rf.random_forest_regression_model_calval(FWI_matrix,burned_area_vector)
 
-"""
-    
+
+"""    
 FWI_temp = FWI_resample.reshape(FWI_resample.size)
 mask = np.isfinite(FWI_temp)
 FWI_all = FWI_temp[mask]
