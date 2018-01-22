@@ -36,6 +36,7 @@ sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/E
 import load_GFED as GFED
 
 import resample_raster as resample
+import random_forest_cal_val as rf
 
 
 # Bounding box for Mexico
@@ -148,10 +149,46 @@ for mm in range(0,n_months):
     FWI_temp = np.mean(FWI[month_mask],axis=0)
     FWI_resample[mm] = resample.resample_nearest_neighbour(FWI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
 
+#--------------------------------------------
+# Now use random forest framework to assess the ability of these metrics
+# to predict burned areas
+FWI_vars = {}
+FWI_resample = np.zeros(burned_area.shape)
+FFMC_resample = np.zeros(burned_area.shape)
+DMC_resample = np.zeros(burned_area.shape)
+DC_resample = np.zeros(burned_area.shape)
+ISI_resample = np.zeros(burned_area.shape)
+BUI_resample = np.zeros(burned_area.shape)
 
+FWI_month = date.astype('datetime64[M]')
+n_months = dates_gfed.size
 
+for mm in range(0,n_months):
+    month_mask = FWI_month==dates_gfed[mm]
+    FWI_temp = np.mean(FWI[month_mask],axis=0)
+    ISI_temp = np.mean(ISI[month_mask],axis=0)
+    BUI_temp = np.mean(BUI[month_mask],axis=0)
+    FFMC_temp = np.mean(FFMC[month_mask],axis=0)
+    DMC_temp = np.mean(DMC[month_mask],axis=0)
+    DC_temp = np.mean(DC[month_mask],axis=0)
+    FWI_resample[mm] = resample.resample_nearest_neighbour(FWI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+    ISI_resample[mm] = resample.resample_nearest_neighbour(ISI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+    BUI_resample[mm] = resample.resample_nearest_neighbour(BUI_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+    FFMC_resample[mm] = resample.resample_nearest_neighbour(FFMC_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+    DMC_resample[mm] = resample.resample_nearest_neighbour(DMC_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
+    DC_resample[mm] = resample.resample_nearest_neighbour(DC_temp,lat,lon,lat_gfed,lon_gfed,mode='max')
 
+FWI_vars['FWI']=FWI_resample.copy()    
+FWI_vars['BUI']=BUI_resample.copy()    
+FWI_vars['ISI']=ISI_resample.copy()    
+FWI_vars['FFMC']=FFMC_resample.copy()    
+FWI_vars['DMC']=DMC_resample.copy()    
+FWI_vars['DC']=DC_resample.copy()    
 
+FWI_matrix, burned_area_vector, FWI_names = rf.construct_variables_matrices(FWI_vars,burned_area,time_series=True)
+model1, cal_score1, val_score1, importance1 = rf.random_forest_regression_model_calval(FWI_matrix,burned_area_vector)
+
+"""
     
 FWI_temp = FWI_resample.reshape(FWI_resample.size)
 mask = np.isfinite(FWI_temp)
@@ -190,3 +227,4 @@ for tt in range(0,n_thresh):
     
 # calculate EDI
 EDI = (np.log(false_alarm_rate)-np.log(hit_rate))/(np.log(false_alarm_rate)+np.log(hit_rate))
+"""
