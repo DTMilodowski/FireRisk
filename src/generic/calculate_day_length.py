@@ -4,6 +4,7 @@
 import numpy as np
 
 def calculate_day_length(julian_day,latitude):
+
     julian_century = (julian_day-2451545.)/36525.
     geom_mean_long_sun = 280.46646+julian_century*(36000.76983 + julian_century*0.0003032) % 360.
     geom_mean_anom_sun = 357.52911+julian_century*(35999.05029 - 0.0001537*julian_century)
@@ -30,9 +31,17 @@ def calculate_day_length(julian_day,latitude):
     HA_sunrise = (180/np.pi)*(np.arccos(np.cos((np.pi/180.)*90.833)/(np.cos((np.pi/180.)*latitude)*np.cos((np.pi/180.)*sun_declin))-np.tan((np.pi/180.)*latitude)*np.tan((np.pi/180.)*sun_declin)))
     
     sunlight_duration = 8*HA_sunrise
-
-    print sunlight_duration
     
     sunlight_duration_hrs = sunlight_duration/60.
 
     return sunlight_duration_hrs
+
+
+# calculate julian day based on a np.datetime64 date
+# Julian calendar should start at January 1, 4713 BC
+# but I get different results to NOAA with datetime64
+# so sticking to their method.
+def calculate_julian_day(date):
+    D = (date - np.datetime64('1970-01-01') + 244058).astype('float')
+    return D
+
