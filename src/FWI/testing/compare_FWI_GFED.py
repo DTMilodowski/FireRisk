@@ -82,6 +82,12 @@ for ii in range(0,lat.size):
         if bm.is_land(lon[jj],lat[ii]):
             land_mask[ii,jj] = 1
 
+# calculate day lengths
+latgrid = np.zeros(t2m.shape[1:])
+for ll in range(0,lon.size):
+    latgrid[:,ll] = lat.copy()
+
+Le = fwi.calculate_Le(latgrid,date)
 
 # Now calculate the FWI
 print "Calculating FWI"
@@ -89,7 +95,6 @@ print "Calculating FWI"
 FFMC_default = 60.
 DMC_default = 20.
 DC_default = 200.
-EffectiveDayLength = 10.
 
 N_t = date.size
 
@@ -109,7 +114,7 @@ for tt in range(0,N_t):
         FFMC[tt,:,:] = fwi.calculate_FFMC_array(rh[tt,:,:],t2m[tt,:,:],wind[tt,:,:],prcp[tt,:,:],FFMC0)
         # calculate DMC
         DMC0=np.zeros(t2m.shape[1:])+DMC_default
-        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],EffectiveDayLength,DMC0)
+        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],Le[tt,:,:],DMC0)
         # calculate DC
         DC0=np.zeros(t2m.shape[1:])+DC_default
         DC[tt,:,:] = fwi.calculate_DC_array(t2m[tt,:,:],prcp[tt,:,:],DC0)
@@ -118,7 +123,7 @@ for tt in range(0,N_t):
         # calculate FFMC
         FFMC[tt,:,:] = fwi.calculate_FFMC_array(rh[tt,:,:],t2m[tt,:,:],wind[tt,:,:],prcp[tt,:,:],FFMC[tt-1,:,:])
         # calculate DMC
-        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],EffectiveDayLength,DMC[tt-1,:,:])
+        DMC[tt,:,:] = fwi.calculate_DMC_array(rh[tt,:,:],t2m[tt,:,:],prcp[tt,:,:],Le[tt,:,:],DMC[tt-1,:,:])
         # calculate DC
         DC[tt,:,:] = fwi.calculate_DC_array(t2m[tt,:,:],prcp[tt,:,:],DC[tt-1,:,:])
         

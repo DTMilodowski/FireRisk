@@ -31,6 +31,23 @@
 #==============================================================================
 import numpy as np
 from matplotlib import pyplot as plt
+import sys
+sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/FireRisk/src/generic')
+import calculate_day_length as cdl
+
+# Function to calculate the effective day length
+# Calculates day length variations through the year based on the NOAA calculator
+# Input arguments are a grid of latitude values and the dates for which the day
+# length calculations are to be carried out
+# effective_fraction gives the fraction of the day considered effective
+def calculate_Le(lat,dates,effective_fraction=1.):
+    # first get julian day of dates
+    JD = cdl.calculate_julian_day(dates)
+    Le = np.zeros((dates.size,lat.shape[0],lat.shape[1]))
+    for dd in range(0,JD.size):
+        Le[dd] = cdl.calculate_day_length(JD[dd],lat)
+    return Le
+    
 # Function to calculate the Fine Fuel Moisture Code.  This describes the
 # moisture status of the fine litter, and is particularly important for in
 # determining the ISI, as ignition likelihood is strongly dependent on the
