@@ -43,7 +43,7 @@ def calculate_PET_penman_monteith(mxT2m,mnT2m, u2m, Rs, P, RH, date, latitude, z
     es = (esTmax + esTmin)/2.
 
     # Actual vapour pressure derived from relative humidity
-    ea = es*RH/200.
+    ea = es*RH/100.
 
     # Inverse relative distance to Sun
     DoY = cdl.calculate_DoY(date)
@@ -85,7 +85,7 @@ def calculate_PET_penman_monteith(mxT2m,mnT2m, u2m, Rs, P, RH, date, latitude, z
     # Overall ET
     ETrad = DT*Rng
     ETwind = PT*TT*(es-ea)
-    PET= ET_rad + ETwind
+    PET= ETrad + ETwind
 
     return PET
 
@@ -96,11 +96,12 @@ def calculate_PET_penman_monteith(mxT2m,mnT2m, u2m, Rs, P, RH, date, latitude, z
 def calculate_cwd(precipitation,PET,spin_up_time = 365):
     n_tsteps = precipitation.shape[0]
     cwd = np.zeros(precipitation.shape)
+    zeros = np.zeros(precipitation.shape[1:])
     for tt in range(0,spin_up_time):
-        cwd[0] = np.min(0,cwd[0]+precipitation[tt]-PET[tt])
+        cwd[0] = np.min((zeros,cwd[0]+precipitation[tt]-PET[tt]),axis=0)
 
-    cwd[0] = np.min(0,cwd[0]+precipitation[0]-PET[0])
+    cwd[0] = np.min((zeros,cwd[0]+precipitation[0]-PET[0]),axis=0)
     for tt in range(1,n_tsteps):
-        cwd[tt] = np.min(0,cwd[tt-1]+precipitation[tt]-PET[tt])
+        cwd[tt] = np.min((zeros,cwd[tt-1]+precipitation[tt]-PET[tt]),axis=0)
 
     return cwd
