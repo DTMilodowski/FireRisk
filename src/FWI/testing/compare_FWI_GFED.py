@@ -38,6 +38,8 @@ import load_GFED as GFED
 import resample_raster as resample
 import random_forest_cal_val as rf
 
+sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/generic/')
+import calculate_PET as pet
 
 # Bounding box for Mexico
 W = -118.15
@@ -69,11 +71,22 @@ path2met = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.175deg_Mexi
 temp1,temp2,temp3,rh = era.calculate_rh_daily(path2met,start_month,start_year,end_month,end_year)
 temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2met,start_month,start_year,end_month,end_year)
 dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2met,'prcp',start_month,start_year,end_month,end_year)
-date,lat,lon,t2m = era.load_ERAinterim_daily(path2met,'mx2t',start_month,start_year,end_month,end_year)
-t2m=t2m[:rh.shape[0],:,:]
+temp,lat,lon,mx2t = era.load_ERAinterim_daily(path2met,'mx2t',start_month,start_year,end_month,end_year)
+date,lat,lon,mn2t = era.load_ERAinterim_daily(path2met,'mn2t',start_month,start_year,end_month,end_year)
+temp1,temp2,temp3,psurf = era.load_ERAinterim_daily(path2met,'psurf',start_month,start_year,end_month,end_year)
+temp1,temp2,temp3,ssrd = era.load_ERAinterim_daily(path2met,'ssrd',start_month,start_year,end_month,end_year)
+mx2t=mx2t[:rh.shape[0],:,:]
+mn2t=mn2t[:rh.shape[0],:,:]
+t2m=(mx2t+mn2t)/2.
 date=date[:rh.shape[0]]
 prcp*=1000
 prcp[prcp<0]=0
+
+# convert pressure to kPa
+psurf/=1000.
+# convert ssrd from Jm-2d-1 to MJm-2d-1
+ssrd/=10**6
+
 # Mask out oceans so that land areas are only considered
 bm = Basemap()
 land_mask = np.zeros((lat.size,lon.size))*np.nan
@@ -192,6 +205,20 @@ FWI_vars['DC']=DC_resample.copy()
 
 FWI_matrix, burned_area_vector, FWI_names = rf.construct_variables_matrices(FWI_vars,burned_area,time_series=True)
 model1, cal_score1, val_score1, importance1 = rf.random_forest_regression_model_calval(FWI_matrix,burned_area_vector)
+
+# Now compare against simple model based on potential evapotranspiration
+# and climatc water deficit
+
+PET = np.zeros(mx2t.shape)
+for dd in range(date.size):
+    PET[dd] = pet.calculate_PET_penman_monteith(mx2t[dd],mn2t[dd], wind[dd], ssrd[dd], psurf[dd], rh[dd], date[dd], latgrid)
+CWD = pet.calculate_cwd(prcp,PET,spin_up_time = 365)
+
+# very simple fire model might only consider CWD and windspeed
+
+
+
+
 
 
 """    
