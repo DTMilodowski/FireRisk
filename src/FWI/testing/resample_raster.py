@@ -38,6 +38,10 @@ def resample_nearest_neighbour(array,lat_i,lon_i,lat_n,lon_n,mode='mean'):
             elif mode == 'min':
                 if array[lat_mask,lon_mask].size>0:
                     regrid[ii,jj] = np.nanmin(array[lat_mask,lon_mask])
+            elif mode == 'sum':
+                if array[lat_mask,lon_mask].size>0:
+                    temp = array[lat_mask,lon_mask]
+                    regrid[ii,jj] = np.sum(temp[np.isfinite(temp)])
             else:
                 print "resample mode not supported"
                 
