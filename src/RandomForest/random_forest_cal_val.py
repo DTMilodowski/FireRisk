@@ -5,6 +5,7 @@
 import numpy as np
 import sys
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 # This function constructs the matrix hosting the range of dependent variables
@@ -32,6 +33,7 @@ from sklearn.model_selection import train_test_split
 def construct_variables_matrices(dependent_variables_dict,target_variable,time_series=False, timestep_axis=0):
 
     variables = dependent_variables_dict.keys()
+    print variables
     n_vars = len(variables)
     n=target_variable.size
     if time_series:
@@ -45,6 +47,7 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
     for vv in range(0,n_vars):
         var = dependent_variables_dict[variables[vv]]
         var_dimensions = np.asarray(var.shape)
+        
         if time_series==True:            
             n_steps = target_variable.shape[timestep_axis]
             if var.shape == target_variable.shape:
@@ -52,15 +55,16 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
                 if timestep_axis == 0:
                     dep_variables_matrix[:,vv]=np.ravel(var)
             else:
-                axes = np.arange(target_variations.size)
-                data_dimensions = np.asarray(target_variable.shape)[axes!=timestep_axis]
+                axes = np.arange(target_variable.size)
+                target_dimensions = np.asarray(target_variable.shape)
+                data_dimensions = np.asarray(var.shape)
                 n_data = np.product(data_dimensions)
-                if np.asarray(var.shape)==data_dimensions:
-                    print '\t',variables[vv],'\t',var.shape,'\tconstant'
+                if np.all(data_dimensions==target_dimensions[1:]):
+                    print '\t',variables[vv],'\t',var.shape,'\t\tconstant'
                     for tt in range(0,n_steps):
                         dep_variables_matrix[tt*n_data:(tt+1)*n_data,vv] = np.ravel(var)
-                    else:
-                        print '\tERROR - dimensions not consistent'
+                else:
+                    print '\tERROR - dimensions not consistent'
 
         # Simple case for non time series data
         else:
@@ -76,6 +80,7 @@ def construct_variables_matrices(dependent_variables_dict,target_variable,time_s
     mask = np.all((dep_finite,target_finite),axis=0)
     
     return dep_variables_matrix[mask], target_variable_vector[mask], variables
+
 
 # Calibrate and validate the random forest regression model
 # Inputs are the matrix of dependent variables, and the associated vector of
