@@ -252,3 +252,95 @@ def plot_fuel_moisture_time_series_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,dat
     plt.show()
     return 0
 
+# Plot time series for fuel mositure alongside upper tier FWI indices at specified timestep
+def plot_fuel_moisture_vs_burned_area_for_pixel(T,P,H,W,FFMC,DMC,DC,ISI,BUI,FWI,burned_area,date,start_tstep,end_tstep,row,col):
+    # fine fuel moisture
+    m_FF = 147.2*(101-FFMC)/(59.5+FFMC)
+    # duff layer moisture
+    m_DF = (20+np.exp((DMC-244.73)/(-43.43)))
+    # soil moisure
+    m_D = np.exp(-DC/400.)*800.
+    
+    if start_tstep < 0:
+        start_tstep = 0
+    if end_tstep > FWI.size:
+        end_tstep = FWI.size
+
+    dates = date.astype(datetime)
+    plt.figure(3, facecolor='White',figsize=[8,12])
+    # plot a -> relative humidity & mean temperature
+    ax_a1 = host_subplot(611, axes_class=AA.Axes)
+    ax_a2 = ax_a1.twinx()
+    ax_a1.annotate('a - relative humidity & air temperature', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_a2.set_ylabel('air temperature / $^o$C',fontsize=axis_size, color = colour[2])
+    ax_a1.set_ylabel('relative humidity / %',fontsize=axis_size,color=colour[1])
+
+    ax_a1.plot(dates[start_tstep:end_tstep],H[start_tstep:end_tstep,row,col],'-',c=colour[1])
+    ax_a2.plot(dates[start_tstep:end_tstep],T[start_tstep:end_tstep,row,col],'-',c=colour[2])
+    
+    # plot b -> precipitation & wind speed
+    ax_b1 = host_subplot(612, axes_class=AA.Axes,sharex = ax_a1)
+    ax_b2 = ax_b1.twinx()
+    ax_b1.annotate('b - precipitation & wind speed', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_b1.set_ylabel('precipitation / mm',fontsize=axis_size, color = colour[1])
+    ax_b2.set_ylabel('wind speed / m.s$^{-1}$',fontsize=axis_size,color=colour[2])
+               
+    ax_b1.plot(dates[start_tstep:end_tstep],P[start_tstep:end_tstep,row,col],'-',c=colour[1])
+    ax_b2.plot(dates[start_tstep:end_tstep],W[start_tstep:end_tstep,row,col],'-',c=colour[2])
+    
+    # plot c -> the moisture contents contributing to FFMC, DMC and DC
+    ax_c1 = host_subplot(613, axes_class=AA.Axes,sharex = ax_a1)
+    ax_c2 = ax_c1.twinx()
+    ax_c3 = ax_c1.twinx()
+    offset = 60
+    new_fixed_axis = ax_c3.get_grid_helper().new_fixed_axis
+    ax_c3.axis["right"] = new_fixed_axis(loc='right',axes = ax_c3, offset = (offset,0))
+    ax_c3.axis["right"].toggle(all=True)
+    ax_c1.annotate('c - fuel moisture contents', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_c1.set_ylabel('Fine fuel layer moisture content / %',fontsize=axis_size, color = colour[1])
+    ax_c2.set_ylabel('Duff layer moisture content / %',fontsize=axis_size,color=colour[2])
+    ax_c3.set_ylabel('Soil moisture content / %',fontsize=axis_size,color=colour[0])
+               
+    ax_c1.plot(dates[start_tstep:end_tstep],m_FF[start_tstep:end_tstep,row,col],'-',c=colour[1])
+    ax_c2.plot(dates[start_tstep:end_tstep],m_DF[start_tstep:end_tstep,row,col],'-',c=colour[2])
+    ax_c3.plot(dates[start_tstep:end_tstep],m_D[start_tstep:end_tstep,row,col],'-',c=colour[0])
+
+    ax_c1.set_ylim(0,250)
+    ax_c2.set_ylim(0,300)
+    ax_c3.set_ylim(0,800)
+
+    # plot d -> the BUI & ISI
+    ax_d1 = host_subplot(614, axes_class=AA.Axes,sharex = ax_a1)
+    ax_d2 = ax_d1.twinx()
+    ax_d1.annotate('d -ISI & BUI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_d1.set_ylabel('ISI',fontsize=axis_size, color = colour[1])
+    ax_d2.set_ylabel('BUI',fontsize=axis_size,color=colour[2])
+               
+    ax_d1.plot(dates[start_tstep:end_tstep],ISI[start_tstep:end_tstep,row,col],'-',c=colour[1])
+    ax_d2.plot(dates[start_tstep:end_tstep],BUI[start_tstep:end_tstep,row,col],'-',c=colour[2])
+
+    # plot e -> the FWI
+    ax_e1 = host_subplot(615, axes_class=AA.Axes,sharex = ax_a1)
+    ax_e1.annotate('e -FWI', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_e1.set_ylabel('FWI',fontsize=axis_size, color = colour[2])
+    ax_e1.set_xlabel('timestep / days',fontsize=axis_size)
+
+    ax_e1.plot(dates[start_tstep:end_tstep],ISI[start_tstep:end_tstep,row,col],'-',c=colour[2])
+
+    
+    # plot f -> the burned area (tbc)
+    ax_f1 = host_subplot(616, axes_class=AA.Axes,sharex = ax_a1)
+    ax_f1.annotate('f - GFED burned area', xy=(0.05,0.95), xycoords='axes fraction',backgroundcolor='none',horizontalalignment='left', verticalalignment='top', fontsize=axis_size)
+    ax_f1.set_ylabel('GFED burned area / km$^2$',fontsize=axis_size, color = colour[2])
+    ax_f1.set_xlabel('timestep / days',fontsize=axis_size)
+
+    ax_f1.plot(dates[start_tstep:end_tstep],burned_area[start_tstep:end_tstep,row,col],'-',c=colour[2])
+    
+    ax_a1.set_xlim(xmin=dates[start_tstep],xmax=dates[end_tstep])
+    plt.tight_layout()
+    plt.show()
+
+    
+    plt.show()
+    return 0
+
