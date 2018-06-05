@@ -85,6 +85,7 @@ lc=lc.astype(int)
 #   - Nfires: number of individual fires in the month 
 #   - Npixels: number of fire pixels in the month
 #   - ignition_day: list of numpy vectors, one for each month, containing the earliest date for respective fires in each month
+#                   Note that ignition day gives the Julian Day for that year
 #   - ignition_lc: list of numpy vectors, one for each month, indicating the landcover for which ignition date was recorded
 #   - majority_lc: list of numpy vectors, one for each month, the principal land cover type affected by each fire
 fires = np.zeros(burnday.shape)
@@ -122,7 +123,7 @@ for yy in range(0,Nyy):
         for ff in range(0,Nfires[ii]):
             mask = fires_iter==fire_labels[ff]
             # pull out the ignition date
-            ignition_day[ii][ff]=np.min(burnday_iter[mask])
+            ignition_day[ii][ff] = np.min(burnday_iter[mask])
             
             # then the landcover for the ignition site
             ignition_mask = burnday_iter[mask]==ignition_day[ii][ff]
