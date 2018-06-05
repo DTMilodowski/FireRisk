@@ -10,6 +10,7 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import cm
 from matplotlib import rcParams
 from mpl_toolkits.axes_grid1 import host_subplot
 import mpl_toolkits.axisartist as AA
@@ -28,7 +29,7 @@ axis_size = rcParams['font.size']+2
 sys.path.append('/home/dmilodow/DataStore_DTM/FOREST2020/EOdata/EO_data_processing/src/plot_EO_data/colormap/')
 import colormaps as cmaps
 plt.register_cmap(name='viridis', cmap=cmaps.viridis)
-plt.register_cmap(name='inferno', cmap=cmaps.inferno)
+plt.register_cmap(name='plasma', cmap=cmaps.plasma)
 plt.set_cmap(cmaps.inferno) # set inferno as default - a good fiery one :-)
 
 # get default colours
@@ -52,21 +53,20 @@ import statsmodels.api as sm
 #   (xres, yres) as input
 # - x_lab, y_lab: labels for x and y axes respectively
 # - units_str: the units for the model and obs
-def plot_regression_model(ax,obs,mod, cmap = 'plasma',gridsize = 100, x_lab = 'model', y_lab = 'observations',units_str=''):
+def plot_regression_model(ax,obs,mod, cmap = 'plasma',gridsize = 100., y_lab = 'model', x_lab = 'observations',units_str=''):
 
     # convert to 1D arrays
-    mod = mod.reshape(mod.size)
-    obs = obs.reshape(obs.size)
-
+    mod = mod.ravel()
+    obs = obs.ravel()
     # plot hexbin
-    hb  = ax.hexbin(mod, obs, gridsize=gridsize, cmap='inferno')
-        
+    hb  = ax.hexbin(obs, mod, gridsize=gridsize, cmap=cmap, bins='log')    
     #cb = fig.colorbar(hb, ax=ax)
     #cb.set_label('counts')
     
     # now plot regression model and CI
-    X = mod.copy()
-    Y= obs.copy()
+    
+    X = obs.copy()
+    Y= mod.copy()
     X = sm.add_constant(X)
 
     model = sm.OLS(Y,X)
@@ -78,26 +78,24 @@ def plot_regression_model(ax,obs,mod, cmap = 'plasma',gridsize = 100, x_lab = 'm
     predict_mean_ci_low, predict_mean_ci_upp = data[:,4:6].T
     predict_ci_low, predict_ci_upp = data[:,6:8].T
     
-    ax.plot(target,fittedvalues,'white',label='Least Square Regression',lw=2)
+    idx = np.argsort(fittedvalues)
+    ax.plot(obs[idx],fittedvalues[idx],'-',color='white',label='Least Square Regression',lw=2)
     idx = np.argsort(predict_ci_low)
-    ax.plot(target[idx],predict_ci_low[idx],'--',color = 'white',lw=2,label='95% confidence interval')
+    ax.plot(obs[idx],predict_ci_low[idx],'--',color = 'white',lw=2,label='95% confidence interval')
     idx = np.argsort(predict_ci_upp)
-    ax.plot(target[idx],predict_ci_upp[idx],'--',color = 'white',lw=2)
+    ax.plot(obs[idx],predict_ci_upp[idx],'--',color = 'white',lw=2)
 
-    mx = np.ceil(max(target.max(),fittedvalues.max()))
-    ax.plot([0,mx],[0,mx],':',colour='white', lw=1)
+    #x = np.ceil(max(obs.max(),fittedvalues.max()))
+    mx = max(mod)
+    ax.plot([0,mx],[0,mx],':',color='white', lw=1)
 
-    ax.set_xlim(0,mx)
-    ax.set_ylim(0,mx)
-
-    ax.set_aspect(1)
    
     ax.legend(loc='upper left')
     ax.set_xlabel(x_lab,fontsize=axis_size)
     ax.set_ylabel(y_lab,fontsize=axis_size)
 
-    nse = 1-((Y-target)**2).sum()/((target-target.mean())**2).sum()
-    rmse = np.sqrt(((Y-target)**2).mean())
+    nse = 1-((Y-obs)**2).sum()/((obs-obs.mean())**2).sum()
+    rmse = np.sqrt(((Y-obs)**2).mean())
 
     p_str=''
     if results.f_pvalue < 0.0001:
@@ -112,9 +110,13 @@ def plot_regression_model(ax,obs,mod, cmap = 'plasma',gridsize = 100, x_lab = 'm
         p_str = 'p < 0.1'
     else:
         p_str = 'p >= 0.1'
-    
-    ax.text(0.98,0.02,'y = %4.2fx + %4.2f\nR$^2$ = %4.2f; $s\nrmse = %4.1f $s ; NSE = %4.2f' % (results.params[1],results.params[0],results.rsquared,p_str,rmse,units_str,nse),va='bottom',ha='right',transform=ax.transAxes)
+        
+    ax.text(0.98,0.5,'y = %4.2fx + %4.2f\nR$^2$ = %4.2f; %s\nrmse = %4.1f %s; NSE = %4.2f' % (results.params[1],results.params[0],results.rsquared,p_str,rmse,units_str,nse),va='center',ha='right',transform=ax.transAxes,color='white')
 
+    #x.set_aspect(1)
+    #x.set_aspect('equal', adjustable='box-forced') 
+    ax.set_xlim((0,mx))
+    ax.set_ylim((0,mx))
     return 0
 
 
@@ -128,14 +130,16 @@ def plot_regression_model(ax,obs,mod, cmap = 'plasma',gridsize = 100, x_lab = 'm
 # - c: (optional) colour (default taken from plasma colour map)
 def plot_importances(ax,varnames,importances,rank=True,c=colour[0]):
 
-    idx = np.arange(importances.size)+1
-    
+    locs = np.arange(importances.size)+1
+    imp = importances.copy()
+    lab = np.asarray(varnames)
     if rank == True:
-        idx = np.argsort(importances)+1
-    
-    ax.bar(idx,importances,color=c,linewidth=0)
-    ax.set_ylabel('Variable importance',fontsize = axis_size)
-    ax.set_xticks(idx)
-    ax.set_xticklabels(varnames,fontsize = axis_size)
+        imp = imp[np.argsort(importances)[::-1]]
+        lab = lab[np.argsort(importances)[::-1]]
 
+    ax.bar(locs,imp,color=c,linewidth=0,align='center')
+    ax.set_ylabel('Variable importance',fontsize = axis_size)
+    ax.set_xticks(locs)
+    ax.set_xticklabels(lab,fontsize = axis_size)
+    ax.set_xlim((0,locs.max()+1))
     return 0
