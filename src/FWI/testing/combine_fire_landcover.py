@@ -23,6 +23,7 @@ N = 12.875
 S = -4.875
 
 # load MODIS fire data
+print "loading MODIS burned area data"
 month,lat,lon,burnday,unc = modis.load_MODIS_monthly_fire(start_year,end_year,suffix,clip=True,N=N,S=S,E=E,W=W)
 
 """
@@ -40,8 +41,10 @@ gridspec.close()
 """
 
 # load landcover data
+print "loading ESA CCI land cover data"
 landcover = []
 for yy in range(0,Nyy):
+    print start_year + yy
     lat_lc, lon_lc, lc_yy = cci.load_landcover(year[yy])
     lc_yy,lat_lc,lon_lc=clip.clip_raster(lc_yy,lat_lc,lon_lc,N,S,E,W)
     landcover.append(cci.aggregate_classes(lc_yy))
@@ -63,6 +66,7 @@ lc=np.swapaxes(lc,1,2)
 io.write_array_to_GeoTiff(lc,geoT_lc,'ESACCI_LC_col_temp')
 
 # use gdalwarp to resample the landcover grid using nearest neighbour
+print "resampling land cover grid to MODIS grid"
 dY_modis = lat[1]-lat[0]
 dX_modis = lon[1]-lon[0]
 N_target = lat.max()+np.abs(dY_modis)/2.
@@ -88,6 +92,7 @@ lc=lc.astype(int)
 #                   Note that ignition day gives the Julian Day for that year
 #   - ignition_lc: list of numpy vectors, one for each month, indicating the landcover for which ignition date was recorded
 #   - majority_lc: list of numpy vectors, one for each month, the principal land cover type affected by each fire
+print "aggregate fire information"
 fires = np.zeros(burnday.shape)
 Nfires= np.zeros(burnday.shape[0],dtype='int')
 Npixels=np.sum(np.sum(burnday>0,axis=2),axis=1)
@@ -100,18 +105,22 @@ ii = 0
 Nfires_total = 0
 for yy in range(0,Nyy):
     print 'year',yy+1,'/',Nyy
-    for mm in range(0,12):
+    for mm in range(0,12): 
+        
+        # pixels that fall outside fires are labelled with a zero
         fire_mask = burnday[ii]>0
+        
+        # use connected components algorithm to identify discrete burns
         fires[ii], Nfires[ii] = ndimage.label(fire_mask)
+        
+        # this ensures that every fire has a unique ID
+        fires[ii][fires[ii]>0]+=Nfires_total
 
-        # note that pixels that fall outside fires are labelled with a zero
-        fires[ii][fires[ii]>0]+=Nfires_total # update to count total number of fires since start of analysis
-    
+        # get labels for each fire
         fire_labels=np.unique(fires[ii])
         fire_labels=fire_labels[fire_labels>0]
-        
-        Nfires_total+=fire_labels.size
 
+        
         ignition_day.append(np.zeros(Nfires[ii]))
         ignition_lc.append(np.zeros(Nfires[ii]))
         majority_lc.append(np.zeros(Nfires[ii]))
@@ -137,8 +146,14 @@ for yy in range(0,Nyy):
             
         # increment index
         ii+=1
+        # increment total number of fires
+        Nfires_total+=fire_labels.size
+
         if ii == Ntsteps:
             break
     if ii == Ntsteps:
         break
-    
+
+# finally, keep track of the observed vs. non-observed pixels in a given month 
+observed_pixels = np.zeros(burnday.shape)
+observed_pixels[np.isfinite(burnday)]==1.
