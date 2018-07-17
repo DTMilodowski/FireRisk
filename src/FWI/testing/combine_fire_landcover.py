@@ -3,6 +3,8 @@ import os
 import sys
 sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/')
 sys.path.append('/home/dmilodow/DataStore_DTM/FOREST2020/FireRisk/src/generic/')
+sys.path.append('/exports/csce/datastore/geos/users/dmilodow/FOREST2020/EOdata/EO_data_processing/src/meteorology')
+import load_ERAinterim as era
 import load_MODIS as modis
 import load_ESA_CCI_lc as cci
 import clip_raster as clip
@@ -24,7 +26,7 @@ S = -4.875
 
 # load MODIS fire data
 print "loading MODIS burned area data"
-month,lat,lon,burnday,unc = modis.load_MODIS_monthly_fire(start_year,end_year,suffix,clip=True,N=N,S=S,E=E,W=W)
+month,lat_MODIS,lon_MODIS,burnday,unc = modis.load_MODIS_monthly_fire(start_year,end_year,suffix,clip=True,N=N,S=S,E=E,W=W)
 
 """
 # Next regrid the landcover data to match the MODIS data.
@@ -67,12 +69,12 @@ io.write_array_to_GeoTiff(lc,geoT_lc,'ESACCI_LC_col_temp')
 
 # use gdalwarp to resample the landcover grid using nearest neighbour
 print "resampling land cover grid to MODIS grid"
-dY_modis = lat[1]-lat[0]
-dX_modis = lon[1]-lon[0]
-N_target = lat.max()+np.abs(dY_modis)/2.
-S_target =lat.min()-np.abs(dY_modis)/2.
-W_target =lon.min()-np.abs(dX_modis)/2.
-E_target = lon.max()+np.abs(dX_modis)/2.
+dY_modis = lat_MODIS[1]-lat_MODIS[0]
+dX_modis = lon_MODIS[1]-lon_MODIS[0]
+N_target = lat_MODIS.max()+np.abs(dY_modis)/2.
+S_target =lat_MODIS.min()-np.abs(dY_modis)/2.
+W_target =lon_MODIS.min()-np.abs(dX_modis)/2.
+E_target = lon_MODIS.max()+np.abs(dX_modis)/2.
 os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f %f -r mode ESACCI_LC_col_temp.tif ESACCI_LC_col_MODISgrid.tif" % (W_target,S_target,E_target,N_target,dX_modis,dY_modis))
 os.system("rm ESACCI_LC_col_temp.tif")
 
@@ -120,15 +122,17 @@ for yy in range(0,Nyy):
         fire_labels=np.unique(fires[ii])
         fire_labels=fire_labels[fire_labels>0]
 
-        
+        # prepare the fire info arrays for this month
         ignition_day.append(np.zeros(Nfires[ii]))
         ignition_lc.append(np.zeros(Nfires[ii]))
         majority_lc.append(np.zeros(Nfires[ii]))
-        
+
+        # retrieve the fire-affected pixels for this month
         fires_iter = fires[ii][fires[ii]>0]
         burnday_iter=burnday[ii][fires[ii]>0]
         lc_iter=lc[yy][fires[ii]>0]
-        # for each fire, loop through the number of fires
+
+        # loop through the fires, extracting the ignition day, ignition lc and majority lc
         for ff in range(0,Nfires[ii]):
             mask = fires_iter==fire_labels[ff]
             # pull out the ignition date
@@ -157,3 +161,52 @@ for yy in range(0,Nyy):
 # finally, keep track of the observed vs. non-observed pixels in a given month 
 observed_pixels = np.zeros(burnday.shape)
 observed_pixels[np.isfinite(burnday)]==1.
+
+#===================================================================================
+# Now we have the fire data processed, we need to load in the met data
+# Once the met data is loaded in, the above fire info will be regridded to
+# ascertain the following:
+# (i) The number of fires occurring on each day of the year
+# (ii) The number of pixels for which we have observations for each day of the year
+# (iii) The burned area for each day of the year
+
+#-----------------------------------------------------------------------------------
+# First, load in the meteorological data
+print "Loading ERA Interim"
+# - relative humidity in %
+# - air temperature in oC - this should ideally be noontime temperature (~peak temperature)
+# - wind speed in m/s
+# - pptn in mm (need to convert from metres)
+# - effective day length
+path2met = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.25deg_Colombia/'
+start_month=1
+end_month = 12
+date,lat_ERA,lon_ERA,rh = era.calculate_rh_daily(path2met,start_month,start_year,end_month,end_year)
+#temp1,temp2,temp3,wind = era.calculate_wind_speed_daily(path2met,start_month,start_year,end_month,end_year)
+#dates_prcp,temp2,temp3,prcp = era.load_ERAinterim_daily(path2met,'prcp',start_month,start_year,end_month,end_year)
+#temp,lat,lon,mx2t = era.load_ERAinterim_daily(path2met,'mx2t',start_month,start_year,end_month,end_year)
+#date,lat,lon,mn2t = era.load_ERAinterim_daily(path2met,'mn2t',start_month,start_year,end_month,end_year)
+#temp1,temp2,temp3,psurf = era.load_ERAinterim_daily(path2met,'psurf',start_month,start_year,end_month,end_year)
+#temp1,temp2,temp3,ssrd = era.load_ERAinterim_daily(path2met,'ssrd',start_month,start_year,end_month,end_year)
+#mx2t=mx2t[:rh.shape[0],:,:]
+#mn2t=mn2t[:rh.shape[0],:,:]
+#t2m=(mx2t+mn2t)/2.
+#prcp*=1000
+#prcp[prcp<0]=0
+
+# convert pressure to kPa
+#psurf/=1000.
+# convert ssrd from Jm-2d-1 to MJm-2d-1
+#ssrd/=10**6
+
+# Mask out oceans so that land areas are only considered
+bm = Basemap()
+land_mask = np.zeros((lat.size,lon.size))*np.nan
+for ii in range(0,lat.size):
+    for jj in range(0,lon.size):
+        if bm.is_land(lon[jj],lat[ii]):
+            land_mask[ii,jj] = 1
+
+# now regrid the MODIS data to the resolution of ERA interim
+
+    
