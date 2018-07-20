@@ -13,16 +13,16 @@ import data_io as io
 from scipy import ndimage
 
 start_year = 2003
-end_year = 2008
+end_year = 2004
 year = np.arange(start_year,end_year+1)
 Nyy = year.size
-suffix = 'col'
+suffix = 'mex'
 
-# Bounding box for Colombia
-W = -79.875
-E = -65.875
-N = 12.875
-S = -4.875
+# Bounding box for Jalisco, Mexico
+W = -105.75
+E = -101.
+N = 23.
+S = 17.5
 
 # load MODIS fire data
 print "loading MODIS burned area data"
@@ -65,7 +65,7 @@ geoT_lc[1] = dX_lc
 # get bbox for MODIS grid
 lc=np.swapaxes(lc,0,1)
 lc=np.swapaxes(lc,1,2)
-io.write_array_to_GeoTiff(lc,geoT_lc,'ESACCI_LC_col_temp')
+io.write_array_to_GeoTiff(lc,geoT_lc,'ESACCI_LC_mex_temp')
 
 # use gdalwarp to resample the landcover grid using nearest neighbour
 print "resampling land cover grid to MODIS grid"
@@ -75,12 +75,12 @@ N_target = lat_MODIS.max()+np.abs(dY_modis)/2.
 S_target =lat_MODIS.min()-np.abs(dY_modis)/2.
 W_target =lon_MODIS.min()-np.abs(dX_modis)/2.
 E_target = lon_MODIS.max()+np.abs(dX_modis)/2.
-os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f %f -r mode ESACCI_LC_col_temp.tif ESACCI_LC_col_MODISgrid.tif" % (W_target,S_target,E_target,N_target,dX_modis,dY_modis))
-os.system("rm ESACCI_LC_col_temp.tif")
+os.system("gdalwarp -overwrite -te %f %f %f %f -tr %f %f -r mode ESACCI_LC_mex_temp.tif ESACCI_LC_jalisco_MODISgrid.tif" % (W_target,S_target,E_target,N_target,dX_modis,dY_modis))
+os.system("rm ESACCI_LC_mex_temp.tif")
 
 lc=None
 # load in new landcover raster
-lc, geoT_lc, coord_sys_lc = io.load_raster_and_georeferencing('ESACCI_LC_col_MODISgrid.tif')
+lc, geoT_lc, coord_sys_lc = io.load_raster_and_georeferencing('ESACCI_LC_jalisco_MODISgrid.tif')
 lc=np.swapaxes(lc,1,2)
 lc=np.swapaxes(lc,0,1)
 lc=lc.astype(int)
@@ -162,10 +162,83 @@ for yy in range(0,Nyy):
 observed_pixels = np.zeros(burnday.shape)
 observed_pixels[np.isfinite(burnday)]==1.
 
+
+#===================================================================================
+# The fire data has been loaded in and preprocessed. The next phase is to build the
+# x,y,t voxel space housing the fire data. The initial processing chain proposed is:
+# (i)   create the voxel space (dimensions: day, lat_MODIS, lon_MODIS)
+#       For each month, populate the relevant parts of this voxel space
+#       - no observations in that month: -9 for this lat/long for all days in month
+#       - no fire in month: 0 for this lat/long for all days in month
+#       - fire: 0 for this lat/long up to burn day, 1 (ignition) or -1 (associated
+#         burned area) on burn day, -9 after
+# (ii)  subsample all the ignition days and a fraction, pi, of the non-burn days,
+#       alongiside their latitude and longitude
+# (iii) retrieve the corresponding stationary data (e.g. landcover) and time series
+#       data for these locations
+#-----------------------------------------------------------------------------------
+
+# (i) the voxel space represents a spatial-temporal point process (i.e. fire), as a
+#     binary fire-no fire (1-0) process, with modifiers for nodata etc as discussed
+start_date = np.datetime64('%04i-01-01' % start_year)
+end_date = np.datetime64('%04i-01-01' % end_year)
+days = np.arange(start_date,end_date+np.timedelta64(1,'D'))
+# This voxel space is denoted N
+N = np.zeros((days.size,lat_MODIS.size,lon_MODIS.size))
+
+# now loop through the months, filling N
+
+
+# (ii) subsample the dataset
+# now create subsample S
+n_ignitions = np.sum(N==1)
+n_clear = np.sum(N==0)
+print float(n_ignitions)/float(n_clear)
+sample_frac = 0.1
+# dimensions of S: fire-nofire,lat,long,tstep
+S = np.zeros(n_ignitions+n_clear*sample_frac)
+lat_ix = np.zeros(n_ignitions+n_clear*sample_frac)
+lon_ix = np.zeros(n_ignitions+n_clear*sample_frac)
+t_ix = np.zeros(n_ignitions+n_clear*sample_frac)
+
+# easiest part is to get the fires as we take all of these
+t_ix[:n_ignitions],lat_ix[:n_ignitions],lon_ix[:n_ignitions] = np.where(N==1)
+S[:n_ignitions]=1
+S[n_ignitions:]=0
+
+# next need to subsample the nonfire pixels
+t_ix_temp,lat_ix_temp,lon_ix_temp=np.where(N==0)
+ix_sample = np.random.choice(t_ix_temp.size,n_clear*sample_frac,replace=False)
+t_ix[n_ignitions:] = t_ix_temp[ix_sample]
+lat_ix[n_ignitions:] = lat_ix_temp[ix_sample]
+lon_ix[n_ignitions:] = lon_ix_temp[ix_sample]
+
+# remove temp arrays
+t_ix_temp=None
+lat_ix_temp=None
+lon_ix_temp=None
+ix_sample = None
+
+# (iii) retrieve the corresponding environmental covariates
+
+
+#===================================================================================
+# The fire data has been loaded in and preprocessed and paired with the
+# corresponding environmental covariates. It is now ready to propagate through the
+# Random Forest analysis to train risk models using the following framework
+# (i)   propagate through random forest classifier (risk of fire igniting)
+#       - output: probability of fire per sq. km per day
+# (ii)  propagate fires through a random forest classifier (risk of large fire)
+#       - output: probability of fire > X sq. km per day
+# (iii) propagate fires through a random forest regression (predicted fire size)
+#       - output: predicted fire size in event of a fire
+#-----------------------------------------------------------------------------------
+
+# (i) propagate through random forest classifier (risk of fire igniting)
+
 #===================================================================================
 # Now we have the fire data processed, we need to load in the met data
-# Once the met data is loaded in, the above fire info will be regridded to
-# ascertain the following:
+# Once the met data is loaded in 
 # (i) The number of fires occurring on each day of the year
 # (ii) The number of pixels for which we have observations for each day of the year
 # (iii) The burned area for each day of the year
@@ -178,7 +251,7 @@ print "Loading ERA Interim"
 # - wind speed in m/s
 # - pptn in mm (need to convert from metres)
 # - effective day length
-path2met = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.25deg_Colombia/'
+path2met = '/disk/scratch/local.2/dmilodow/ERAinterim/source_files/0.25deg_Mexico/'
 start_month=1
 end_month = 12
 date,lat_ERA,lon_ERA,rh = era.calculate_rh_daily(path2met,start_month,start_year,end_month,end_year)
@@ -208,5 +281,3 @@ for ii in range(0,lat.size):
             land_mask[ii,jj] = 1
 
 # now regrid the MODIS data to the resolution of ERA interim
-
-    
