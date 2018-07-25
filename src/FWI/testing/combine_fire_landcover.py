@@ -12,8 +12,10 @@ import resample_raster as rs
 import data_io as io
 from scipy import ndimage
 
+import voxelise_modis_burned_area as vox
+
 start_year = 2003
-end_year = 2004
+end_year = 2003
 year = np.arange(start_year,end_year+1)
 Nyy = year.size
 suffix = 'mex'
@@ -113,6 +115,8 @@ for yy in range(0,Nyy):
         fire_mask = burnday[ii]>0
         
         # use connected components algorithm to identify discrete burns
+        # Note that may need to do something more complex e.g. Archibald & Roy (2009)
+        # to account for aggregation of large fires
         fires[ii], Nfires[ii] = ndimage.label(fire_mask)
         
         # this ensures that every fire has a unique ID
@@ -126,6 +130,7 @@ for yy in range(0,Nyy):
         ignition_day.append(np.zeros(Nfires[ii]))
         ignition_lc.append(np.zeros(Nfires[ii]))
         majority_lc.append(np.zeros(Nfires[ii]))
+        fire_pixels.append(np.zeros(Nfires[ii]))
 
         # retrieve the fire-affected pixels for this month
         fires_iter = fires[ii][fires[ii]>0]
@@ -137,7 +142,6 @@ for yy in range(0,Nyy):
             mask = fires_iter==fire_labels[ff]
             # pull out the ignition date
             ignition_day[ii][ff] = np.min(burnday_iter[mask])
-            
             # then the landcover for the ignition site
             ignition_mask = burnday_iter[mask]==ignition_day[ii][ff]
             ignition_lc[ii][ff]=np.bincount(lc_iter[mask][ignition_mask]).argmax()
@@ -148,10 +152,10 @@ for yy in range(0,Nyy):
             # finally the number of pixels associated with each fire
             fire_pixels[ii][ff] = mask.sum()
             
+        # increment total number of fires
+        Nfires_total+=Nfires[ii]
         # increment index
         ii+=1
-        # increment total number of fires
-        Nfires_total+=fire_labels.size
 
         if ii == Ntsteps:
             break
@@ -181,25 +185,47 @@ observed_pixels[np.isfinite(burnday)]==1.
 # (i) the voxel space represents a spatial-temporal point process (i.e. fire), as a
 #     binary fire-no fire (1-0) process, with modifiers for nodata etc as discussed
 start_date = np.datetime64('%04i-01-01' % start_year)
-end_date = np.datetime64('%04i-01-01' % end_year)
+end_date = np.datetime64('%04i-12-31' % end_year)
 days = np.arange(start_date,end_date+np.timedelta64(1,'D'))
 # This voxel space is denoted N
-N = np.zeros((days.size,lat_MODIS.size,lon_MODIS.size))
-
+N = np.zeros((days.size,lat_MODIS.size,lon_MODIS.size),dtype='int')
+day_count = 0
 # now loop through the months, filling N
+for yy in range(0,Nyy):
+    day_of_year_at_start_of_month = 0
+    print 'year',yy+1,'/',Nyy
+    for mm in range(0,12):
+        # Reformat burnday to give day of month, rather than day of year
+        burnday_iter = burnday[mm].copy()
+        burnday_iter[np.isnan(burnday_iter)]=-9999
+        burnday_iter=burnday_iter.astype('int')
+        burnday_iter[burnday_iter>0]-=day_of_year_at_start_of_month
+                
+        month_iter = np.datetime64('%04i-%02i-01' % (start_year+yy,mm+1), 'D')
+        if mm == 11:
+            month_next = np.datetime64('%04i-01-01' % (start_year+yy+1), 'D')
+        else:
+            month_next = np.datetime64('%04i-%02i-01' % (start_year+yy,mm+2), 'D')
+        days_in_month = (month_next - month_iter).astype('int')  
+        # define voxelspace for this month
+        N_iter = np.zeros((days_in_month,lat_MODIS.size,lon_MODIS.size),dtype='int')
+        N[day_count:day_count+days_in_month ] = vox.voxelspace(N_iter,burnday_iter)
 
-
+        day_of_year_at_start_of_month+=days_in_month
+        day_count+=days_in_month
+        
 # (ii) subsample the dataset
 # now create subsample S
 n_ignitions = np.sum(N==1)
 n_clear = np.sum(N==0)
 print float(n_ignitions)/float(n_clear)
-sample_frac = 0.1
+sample_frac = 0.001
+n_clear_sample = int(np.ceil(sample_frac*n_clear))
 # dimensions of S: fire-nofire,lat,long,tstep
-S = np.zeros(n_ignitions+n_clear*sample_frac)
-lat_ix = np.zeros(n_ignitions+n_clear*sample_frac)
-lon_ix = np.zeros(n_ignitions+n_clear*sample_frac)
-t_ix = np.zeros(n_ignitions+n_clear*sample_frac)
+S = np.zeros(n_ignitions+n_clear_sample)
+lat_ix = np.zeros(n_ignitions+n_clear_sample)
+lon_ix = np.zeros(n_ignitions+n_clear_sample)
+t_ix = np.zeros(n_ignitions+n_clear_sample)
 
 # easiest part is to get the fires as we take all of these
 t_ix[:n_ignitions],lat_ix[:n_ignitions],lon_ix[:n_ignitions] = np.where(N==1)
@@ -208,7 +234,7 @@ S[n_ignitions:]=0
 
 # next need to subsample the nonfire pixels
 t_ix_temp,lat_ix_temp,lon_ix_temp=np.where(N==0)
-ix_sample = np.random.choice(t_ix_temp.size,n_clear*sample_frac,replace=False)
+ix_sample = np.random.choice(t_ix_temp.size,n_clear_sample,replace=False)
 t_ix[n_ignitions:] = t_ix_temp[ix_sample]
 lat_ix[n_ignitions:] = lat_ix_temp[ix_sample]
 lon_ix[n_ignitions:] = lon_ix_temp[ix_sample]
