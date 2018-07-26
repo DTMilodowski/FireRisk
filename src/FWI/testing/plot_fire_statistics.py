@@ -22,3 +22,25 @@ def plot_cumulative_fire_affected_pixels(fignum,figname,month,pix):
     plt.savefig(figname)
     plt.show()
     return 0
+
+# as above, except here we include land cover to separate out the fire activity
+# pix is now a dictionary of cumulatively affected pixels with the dictionary
+# key indicating the landcover type
+def plot_cumulative_fire_affected_pixels_by_landcover(fignum,figname,month,pix):
+    lc = pix.keys()
+    n_lc = len(lc)
+
+    fig = plt.figure(fignum, facecolor='White',figsize=[4,4])
+    ax = plt.subplot2grid((1,1),(0,0))
+    all_fires = np.zeros(month.size)
+    for ll in range(0,n_lc):
+        ax.plot(month.astype(dt.datetime),pix[lc[ll]]/1000.,label = lc[ll])
+        all_fires+=pix[lc[ll]]
+        
+    ax.plot(month.astype(dt.datetime),pix[lc[ll]]/1000., colour = 'black', label = 'all')    
+    ax.set_ylabel('Cumulative fire affected pixels / 10$^3$')
+    plt.tight_layout()
+    plt.savefig(figname)
+    plt.show()
+    return 0
+
