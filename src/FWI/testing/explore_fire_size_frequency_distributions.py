@@ -16,7 +16,7 @@ import plot_fire_statistics as pfire
 
 
 start_year = 2001
-end_year = 2016
+end_year = 2015
 year = np.arange(start_year,end_year+1)
 Nyy = year.size
 suffix = 'mex'
@@ -92,3 +92,77 @@ for mm in range(0, n_months):
 affected_pixels = affected_pixels_temp.sum(axis=1)
 month_ts = np.arange(np.datetime64(str(start_year)+'-01','M'),np.datetime64(str(end_year+1)+'-01','M'))
 pfire.plot_cumulative_fire_affected_pixels(1,'cumulative_fire_affected_pixels_jalisco.png',month_ts,affected_pixels)
+
+
+## Next up look at the population statistics
+print "aggregate fire information"
+fires = np.zeros(burnday.shape)
+Nfires= np.zeros(burnday.shape[0],dtype='int')
+Npixels=np.sum(np.sum(burnday>0,axis=2),axis=1)
+ignition_day = []
+ignition_lc = []
+majority_lc = []
+fire_pixels = []
+Ntsteps = burnday.shape[0]
+ii = 0
+Nfires_total = 0
+for yy in range(0,Nyy):
+    print 'year',yy+1,'/',Nyy
+    for mm in range(0,12): 
+        
+        # pixels that fall outside fires are labelled with a zero
+        fire_mask = burnday[ii]>0
+        
+        # use connected components algorithm to identify discrete burns
+        # Note that may need to do something more complex e.g. Archibald & Roy (2009)
+        # to account for aggregation of large fires
+        fires[ii], Nfires[ii] = ndimage.label(fire_mask)
+        
+        # this ensures that every fire has a unique ID
+        fires[ii][fires[ii]>0]+=Nfires_total
+
+        # get labels for each fire
+        fire_labels=np.unique(fires[ii])
+        fire_labels=fire_labels[fire_labels>0]
+
+        # prepare the fire info arrays for this month
+        ignition_day.append(np.zeros(Nfires[ii]))
+        ignition_lc.append(np.zeros(Nfires[ii]))
+        majority_lc.append(np.zeros(Nfires[ii]))
+        fire_pixels.append(np.zeros(Nfires[ii]))
+
+        # retrieve the fire-affected pixels for this month
+        fires_iter = fires[ii][fires[ii]>0]
+        burnday_iter=burnday[ii][fires[ii]>0]
+        #lc_iter=lc[yy][fires[ii]>0]
+        lc_iter=lc[0][fires[ii]>0]
+
+        # loop through the fires, extracting the ignition day, ignition lc and majority lc
+        for ff in range(0,Nfires[ii]):
+            mask = fires_iter==fire_labels[ff]
+            # pull out the ignition date
+            ignition_day[ii][ff] = np.min(burnday_iter[mask])
+            # then the landcover for the ignition site
+            ignition_mask = burnday_iter[mask]==ignition_day[ii][ff]
+            ignition_lc[ii][ff]=np.bincount(lc_iter[mask][ignition_mask]).argmax()
+            
+            # then the majority landcover of the fire
+            majority_lc[ii][ff]=np.bincount(lc_iter[mask]).argmax()
+
+            # finally the number of pixels associated with each fire
+            fire_pixels[ii][ff] = mask.sum()
+            
+        # increment total number of fires
+        Nfires_total+=Nfires[ii]
+        # increment index
+        ii+=1
+
+        if ii == Ntsteps:
+            break
+    if ii == Ntsteps:
+        break
+
+#convert list of arrays to single 1D array
+fires = np.concatenate(fire_pixels,axis=0)
+lc_class = np.concatenate(majority_lc,axis=0)
+pfire.plot_fire_size_frequency_distribution(2,'fire_size_distributions_by_landcover_jalisco.png',fires,lc_class)
