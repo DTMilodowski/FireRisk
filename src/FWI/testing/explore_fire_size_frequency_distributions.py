@@ -166,3 +166,16 @@ for yy in range(0,Nyy):
 fires = np.concatenate(fire_pixels,axis=0)
 lc_class = np.concatenate(majority_lc,axis=0)
 pfire.plot_fire_size_frequency_distribution(2,'fire_size_distributions_by_landcover_jalisco.png',fires,lc_class)
+
+
+# finally, keep track of the observed vs. non-observed pixels in a given month
+observed_pixels={}
+observed_pixels['all']= np.isfinite(burnday).sum(axis=2).sum(axis=1)
+forest_mask = np.ma.masked_array(burnday,mask=np.ones(burnday.shape)*(lc[0]==2)[np.newaxis,:,:])
+observed_pixels['forest']=np.all((np.isfinite(burnday),forest_mask.mask),axis=0).sum(axis=2).sum(axis=1)
+agri_mask = np.ma.masked_array(burnday,mask=np.ones(burnday.shape)*(lc[0]==1)[np.newaxis,:,:])
+observed_pixels['agri']=np.all((np.isfinite(burnday),agri_mask.mask),axis=0).sum(axis=2).sum(axis=1)
+other_mask = np.ma.masked_array(burnday,mask=np.ones(burnday.shape)*(lc[0]>2)[np.newaxis,:,:])
+observed_pixels['other']=np.all((np.isfinite(burnday),other_mask.mask),axis=0).sum(axis=2).sum(axis=1)
+
+pfire.plot_time_varying_activity(3,'fire_activity_ts_jalisco.png',month,observed_pixels,fire_pixels,majority_lc)
