@@ -83,13 +83,23 @@ lc=lc.astype(int)
 # fire hazard is adequately captured by the data.
 burnday_collapsed = burnday.reshape(burnday.shape[0],burnday.shape[1]*burnday.shape[2])
 affected_pixels_temp = np.zeros(burnday_collapsed.shape)
+affected_pixels_forest = np.zeros(burnday_collapsed.shape)
+affected_pixels_agri = np.zeros(burnday_collapsed.shape)
+affected_pixels_other = np.zeros(burnday_collapsed.shape)
 n_months = burnday.shape[0]
 for mm in range(0, n_months):
     mask = burnday_collapsed[mm]>0
     affected_pixels_temp[mm:,mask] = 1
+    affected_pixels_forest[mm:,np.all((mask,lc.ravel()==2),axis=0)] = 1
+    affected_pixels_agri[mm:,np.all((mask,lc.ravel()==1),axis=0)] = 1
+    affected_pixels_other[mm:,np.all((mask,lc.ravel()>2),axis=0)] = 1
 
+affected_pixels={}
+affected_pixels['all'] = affected_pixels_temp.sum(axis=1)
+affected_pixels['forest'] = affected_pixels_forest.sum(axis=1)
+affected_pixels['agri'] = affected_pixels_agri.sum(axis=1)
+affected_pixels['other'] = affected_pixels_other.sum(axis=1)
 
-affected_pixels = affected_pixels_temp.sum(axis=1)
 month_ts = np.arange(np.datetime64(str(start_year)+'-01','M'),np.datetime64(str(end_year+1)+'-01','M'))
 pfire.plot_cumulative_fire_affected_pixels(1,'cumulative_fire_affected_pixels_jalisco.png',month_ts,affected_pixels)
 
