@@ -13,11 +13,11 @@ import sys
 sys.path.append('/home/dmilodow/DataStore_DTM/FOREST2020/EOdata/EO_data_processing/src/plot_EO_data/colormap/')
 import colormaps as cmaps
 plt.register_cmap(name='viridis', cmap=cmaps.viridis)
-plt.register_cmap(name='plasma', cmap=cmaps.inferno)
-plt.set_cmap(cmaps.plasma)
+plt.register_cmap(name='inferno', cmap=cmaps.inferno)
+plt.set_cmap(cmaps.inferno)
 
 # code to get trio of nice colourblind friendly colours 
-cmap = cm.get_cmap('plasma')
+cmap = cm.get_cmap('inferno')
 scale = np.arange(0.,4.)
 scale /=3.5
 colour = cmap(scale)
@@ -114,6 +114,67 @@ def plot_fire_size_frequency_distribution(fignum,figname,fires,lc_class):
     ax.set_yscale('log')
     ax.set_xscale('log')
     plt.legend(loc='lower left')
+    plt.tight_layout()
+    plt.savefig(figname)
+    plt.show()
+    return 0
+
+# Simple plot to show how (i) observed area; (ii) frequency, and (iii)
+# total area affected by fire varies through time (% pixels affected
+# per month, coloured by % of pixels observed)
+def plot_time_varying_activity(fignum,figname,month,observed_pixels,fire_pixels, landcover):
+
+    t = month.astype(dt.datetime)
+    
+    areas={}
+    areas['all']=np.zeros(month.size)
+    areas['forest']=np.zeros(month.size)
+    areas['agri']=np.zeros(month.size)
+    areas['other']=np.zeros(month.size)
+    events={}
+    events['all']=np.zeros(month.size)
+    events['forest']=np.zeros(month.size)
+    events['agri']=np.zeros(month.size)
+    events['other']=np.zeros(month.size)
+    for mm in range(0,len(fire_pixels)):
+        events['all'][mm]=fire_pixels[mm].size
+        areas['all'][mm]=fire_pixels[mm].sum()
+        events['forest'][mm]=fire_pixels[mm][landcover[mm]==2].size
+        areas['forest'][mm]=fire_pixels[mm][landcover[mm]==2].sum()
+        events['agri'][mm]=fire_pixels[mm][landcover[mm]==1].size
+        areas['agri'][mm]=fire_pixels[mm][landcover[mm]==1].sum()
+        events['other'][mm]=fire_pixels[mm][landcover[mm]>2].size
+        areas['other'][mm]=fire_pixels[mm][landcover[mm]>2].sum()
+        
+    fig = plt.figure(fignum, facecolor='White',figsize=[8,8])
+    ax1 = plt.subplot2grid((3,1),(0,0))
+    ax1.plot(t,observed_pixels['all']/1000.,'-',c=colour[0])
+    ax1.plot(t,observed_pixels['agri']/1000.,'-',c=colour[1])
+    ax1.plot(t,observed_pixels['forest']/1000.,'-',c=colour[2])
+    ax1.plot(t,observed_pixels['other']/1000.,'-',c=colour[3])
+    ax1.set_ylim(ymin=0)
+    
+
+    ax2 = plt.subplot2grid((3,1),(1,0),sharex=ax1)
+    ax2.plot(t,areas['all']/observed_pixels['all'].astype('float'),'-',c=colour[0],label='all')
+    ax2.plot(t,areas['agri']/observed_pixels['agri'].astype('float'),'-',c=colour[1],label='agriculture')
+    ax2.plot(t,areas['forest']/observed_pixels['forest'].astype('float'),'-',c=colour[2],label='forest')
+    ax2.plot(t,areas['other']/observed_pixels['other'].astype('float'),'-',c=colour[3],label='other')
+    ax2.set_ylim(ymin=0)
+
+    
+    ax3 = plt.subplot2grid((3,1),(2,0),sharex=ax1)
+    ax3.plot(t,events['all']/observed_pixels['all'].astype('float'),'-',c=colour[0],label='all')
+    ax3.plot(t,events['agri']/observed_pixels['agri'].astype('float'),'-',c=colour[1],label='agriculture')
+    ax3.plot(t,events['forest']/observed_pixels['forest'].astype('float'),'-',c=colour[2],label='forest')
+    ax3.plot(t,events['other']/observed_pixels['other'].astype('float'),'-',c=colour[3],label='other')
+    ax3.set_ylim(ymin=0)
+
+    
+    ax1.set_ylabel('10$^3$ pixels observed')
+    ax2.set_ylabel('area burned / %')
+    ax3.set_ylabel('fire incidence rate / pixels$^{-1}$')
+    ax2.legend(loc='upper right')
     plt.tight_layout()
     plt.savefig(figname)
     plt.show()
