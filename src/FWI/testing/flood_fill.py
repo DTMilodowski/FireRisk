@@ -34,7 +34,7 @@ def separate_fires(burnday,lim=8):
 # lim is the threshold below which neighbouring pixels are considered part of the same object
 # ref is the reference against which to test the current pixel value. If not specified, then
 # this is set as the value of the root pixel (i.e. the start of the recursive sequence).
-def floodFill(vals,patch,i,j,tag,lim, ref):
+def floodFill(vals,patch,i,j,tag,lim, ref=None):
     
     # The recursive algorithm. Starting at row i and column j, changes any adjacent
     # cells in the 4-pixel neighbourhood (left,up,right,down) if the difference of
