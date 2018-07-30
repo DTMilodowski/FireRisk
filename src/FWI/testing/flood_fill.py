@@ -1,6 +1,6 @@
 import numpy as np
 
-
+"""
 # A fuzzy flood fill algorithm to separate merged fires
 # input args:
 # - BA the burned area array giving date burned
@@ -31,7 +31,7 @@ def separate_fires(BA,fires_i,n_fires,lim=8):
         else:
             fires[mask]=tag
             tag+=1
-
+"""
 # Recursive flood fill function
 # vals is the burned area dates
 # i is the test row and col
@@ -41,10 +41,9 @@ def floodFill(vals,patch,i,j,tag,lim, ref_day):
     # The recursive algorithm. Starting at x and y, changes any adjacent
     # characters that match oldChar to newChar.
     nrows,ncols = vals.shape
-
     if ref_day==None:
         ref_day=vals[i,j]
-        
+    
     if np.abs(vals[i,j]-ref_day) <= lim:
         # Within specified fuzzy limit, so update
         patch[i,j]=tag
@@ -52,23 +51,26 @@ def floodFill(vals,patch,i,j,tag,lim, ref_day):
 
         # Recursive calls. Make a recursive call as long as we are not on the boundary
         if j > 0: # left
-            floodFill(vals, patch, i, j-1, tag, lim,ref_day)
+            # also check that neighbour pixel has not already been assigned
+            if patch[i,j-1]!=tag:
+                floodFill(vals, patch, i, j-1, tag, lim,ref_day)
 
         if i > 0: # up
-            floodFill(vals, patch,i-1, j, tag, lim,ref_day)
-
+            if patch[i-1,j]!=tag:
+                floodFill(vals, patch,i-1, j, tag, lim,ref_day)
         if j < ncols-1: # right
-            floodFill(vals, patch,i, j+1, tag, lim,ref_day)
-
+            if patch[i,j+1]!=tag:
+                floodFill(vals, patch,i, j+1, tag, lim,ref_day)
         if i < nrows-1: # down
-            floodFill(vals, patch,i+1, j, tag,lim, ref_day)
+            if patch[i+1,j]!=tag:
+                floodFill(vals, patch,i+1, j, tag,lim, ref_day)
     else:
         # Base case. If the current x, y character is not the oldChar,
         # then do nothing.
         return
 
 
-    
+"""
 flood_fill_burned_area():
 
 
@@ -95,3 +97,39 @@ def floodfill(x, y, oldColor, newColor):
         theStack.append( (x, y + 1) )  # down
 
         theStack.append( (x, y - 1) )  # up
+
+
+1 6 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]]
+1 5 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  5.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]]
+1 4 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  5.  5.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]]
+0 5 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  5.  5.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  0.  0.  0.  0.]]
+
+"""
