@@ -1,37 +1,29 @@
 import numpy as np
 
-"""
+
 # A fuzzy flood fill algorithm to separate merged fires
 # input args:
-# - BA the burned area array giving date burned
-# - fires_i the initial discretised fire map
-# - n_fires the number of fires (calculated when fires_i is calculated
+# - burnday the burned area array giving date burned
 # - lim the threshold number of days for fire to be included
-def separate_fires(BA,fires_i,n_fires,lim=8):
-    fires = np.zeros(BA.shape)
+def separate_fires(burnday,lim=8):
+    # get rows and cols of fire-affected pixels
+    rows,cols = np.where(burnday>0)
+    n = rows.size
+    # setup host array for segmented fires
+    fires = np.zeros(burnday.shape)
+    # Need an updating tag number for each fire
     tag = 1
-    for ff in in range(0,n_fires):
-        mask = fires_i==ff+1 # labels start at 1
-        n_pix = mask.sum()
-        if n_pix>1: # only need to do any checks if we have more than one fire
-            assigned = np.zeros(n_pix)
-            idx=np.where(fires_i==ff+1) # get row and col for each pixel in fire
-            
-            # continue until all pixels are assigned
-            assigned[0]=1
-            while assigned.sum()<n_pix:
-                
-                
-                if assigned.sum==n_pix:
-                    tag+=1
-                    break
-                else:
-                    continue
-            
-        else:
-            fires[mask]=tag
+    # Now loop through the fire pixels
+    for ff in in range(0,n):
+        # if this fire pixel has not yet been assigned to a fire, start flood fill
+        if fires[rows[ff],cols[ff]]==0:
+            floodFill(burnday,fires,rows[ff],cols[ff],tag,lim)
+            # update fire tag number for next fire
             tag+=1
-"""
+        else:
+            continue
+    return fires
+
 # Recursive flood fill function
 # vals is the burned area dates
 # i is the test row and col
@@ -68,68 +60,3 @@ def floodFill(vals,patch,i,j,tag,lim, ref_day):
         # Base case. If the current x, y character is not the oldChar,
         # then do nothing.
         return
-
-
-"""
-flood_fill_burned_area():
-
-
-def floodfill(x, y, oldColor, newColor):
-
-    # assume surface is a 2D image and surface[x][y] is the color at x, y.
-
-    theStack = [ (x, y) ]
-
-    while len(theStack) > 0:
-
-        x, y = theStack.pop()
-
-        if surface[x][y] != oldColor:
-
-            continue
-
-        surface[x][y] = newColor
-
-        theStack.append( (x + 1, y) )  # right
-
-        theStack.append( (x - 1, y) )  # left
-
-        theStack.append( (x, y + 1) )  # down
-
-        theStack.append( (x, y - 1) )  # up
-
-
-1 6 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]]
-1 5 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  5.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]]
-1 4 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  5.  5.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]]
-0 5 [[ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  5.  5.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]
- [ 0.  0.  0.  0.  0.  0.  0.  0.]]
-
-"""
